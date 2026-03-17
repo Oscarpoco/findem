@@ -1,25 +1,26 @@
-import { Text, View } from "@/components/Themed";
+import OnboardingSteps from "@/components/OnboardingSteps";
+import { View } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Button, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 
 export const screenOptions = {
-  title: "index",
+  title: "Onboarding",
   headerShown: false,
 };
 
-export default function Home() {
+export default function Onboarding() {
   const router = useRouter();
 
   const colorScheme = useColorScheme();
 
-  const handleLogout = async () => {
+  const handleDone = async () => {
     try {
-      await AsyncStorage.removeItem("findem_is_authenticated");
+      await AsyncStorage.setItem("findem_onboarding_completed", "true");
     } catch (error) {
-      if (__DEV__) console.warn("Failed to clear auth flag on logout:", error);
+      if (__DEV__) console.warn("Failed to persist onboarding flag:", error);
     }
     router.replace("/Login");
   };
@@ -31,8 +32,7 @@ export default function Home() {
         { backgroundColor: Colors[colorScheme ?? "light"].background },
       ]}
     >
-      <Text style={styles.title}>Home</Text>
-      <Button title="Logout" onPress={handleLogout} />
+      <OnboardingSteps onDone={handleDone} />
     </View>
   );
 }
@@ -40,13 +40,5 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
   },
 });
