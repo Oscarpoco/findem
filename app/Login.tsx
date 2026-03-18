@@ -13,8 +13,11 @@ import {
   StatusBar,
   Image,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuthStore, type AuthState } from "@/src/state/authStore";
+import { useMutation } from "@tanstack/react-query";
+import { loginWithEmail, normalizeAuthResponse } from "../src/api/user";
+import { toastError, toastSuccess } from "@/src/ui/toast";
 
 export const screenOptions = {
   title: "Login",
@@ -23,13 +26,15 @@ export const screenOptions = {
 
 /* ─── ONLINE AVATAR URL ─── */
 const AVATAR_URL = "https://api.dicebear.com/7.x/avataaars/png?seed=NorthHealth&backgroundColor=ffffff";
-const AUTH_KEY = "findem_is_authenticated";
 
 export default function Login() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const TINT = Colors.light.tint;
+  const login = useAuthStore((s: AuthState) => s.login);
+  const profileCompleted = useAuthStore((s) => s.profileCompleted);
+  const careerCompleted = useAuthStore((s) => s.careerCompleted);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,14 +42,51 @@ export default function Login() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
 
+  const loginMutation = useMutation({
+    mutationFn: async () => {
+      const trimmedEmail = email.trim().toLowerCase();
+      return loginWithEmail({ email: trimmedEmail, password });
+    },
+    onMutate: () => {},
+    onSuccess: async (data) => {
+      const normalized = normalizeAuthResponse(data, { email });
+      if (!normalized.uid) {
+        throw new Error("Login succeeded but uid was missing from response.");
+      }
+      await login({
+        accessToken: normalized.accessToken,
+        user: { id: normalized.uid, email: normalized.email ?? email },
+      });
+      toastSuccess("Signed in", "Welcome back.");
+      if (!profileCompleted) {
+        router.replace("/ProfileUpdate");
+      } else if (!careerCompleted) {
+        router.replace("/CareerPath");
+      } else {
+        router.replace("/(tabs)");
+      }
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ??
+        error?.message ??
+        "Login failed. Please try again.";
+      toastError("Login failed", String(message));
+    },
+  });
+
   /* ─── HANDLERS ─── */
   const handleLogin = async () => {
-    try {
-      await AsyncStorage.setItem(AUTH_KEY, "true");
-    } catch (error) {
-      if (__DEV__) console.warn("Failed to persist auth flag:", error);
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
+      toastError("Invalid email", "Please enter a valid email address.");
+      return;
     }
-    router.replace("/(tabs)");
+    if (!password) {
+      toastError("Missing password", "Please enter your password.");
+      return;
+    }
+    loginMutation.mutate();
   };
 
   const handleGoogleSignIn = () => {
@@ -108,7 +150,6 @@ export default function Login() {
 
         {/* ─── FORM ─── */}
         <View style={styles.form}>
-
           {/* EMAIL FIELD */}
           <View style={styles.fieldGroup}>
             <Text style={[styles.fieldLabel, { color: colors.text }]}>Email</Text>
@@ -190,11 +231,17 @@ export default function Login() {
 
           {/* SIGN IN BUTTON */}
           <TouchableOpacity
-            style={[styles.loginBtn, { backgroundColor: TINT }]}
+            style={[
+              styles.loginBtn,
+              { backgroundColor: TINT, opacity: loginMutation.isPending ? 0.7 : 1 },
+            ]}
             onPress={handleLogin}
             activeOpacity={0.85}
+            disabled={loginMutation.isPending}
           >
-            <Text style={styles.loginBtnText}>Sign In</Text>
+            <Text style={styles.loginBtnText}>
+              {loginMutation.isPending ? "Signing In..." : "Sign In"}
+            </Text>
             <View style={styles.loginArrow}>
               <Ionicons name="chevron-forward" size={20} color={TINT} />
             </View>
@@ -271,7 +318,7 @@ const styles = StyleSheet.create({
   headerDivider: {
     position: "absolute",
     width: '95%',
-    height: 22,
+    height: 34,
     backgroundColor: "red",
     left: 5,
     zIndex: 1,
@@ -280,7 +327,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    width: "87%",
+    width: "83%",
     borderRadius: 50,
     paddingVertical: 6,
     paddingHorizontal: 6,

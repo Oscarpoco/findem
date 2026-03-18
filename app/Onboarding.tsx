@@ -3,8 +3,8 @@ import { View } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StyleSheet } from "react-native";
+import { useOnboardingStore } from "@/src/state/onboardingStore";
 
 export const screenOptions = {
   title: "Onboarding",
@@ -15,13 +15,10 @@ export default function Onboarding() {
   const router = useRouter();
 
   const colorScheme = useColorScheme();
+  const completeOnboarding = useOnboardingStore((s) => s.complete);
 
   const handleDone = async () => {
-    try {
-      await AsyncStorage.setItem("findem_onboarding_completed", "true");
-    } catch (error) {
-      if (__DEV__) console.warn("Failed to persist onboarding flag:", error);
-    }
+    completeOnboarding();
     router.replace("/Login");
   };
 

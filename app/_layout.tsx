@@ -10,6 +10,9 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/components/useColorScheme";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { AppQueryProvider } from "@/src/providers/QueryProvider";
+import { AlertToast } from "@/src/ui/AlertToast";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -64,16 +67,24 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Splash" options={{ headerShown: false }} />
-        <Stack.Screen name="Onboarding" options={{ headerShown: false }} />
-        <Stack.Screen name="Login" options={{ headerShown: false }} />
-        <Stack.Screen name="Register" options={{ headerShown: false }} />
-        <Stack.Screen name="ResetPassword" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-      </Stack>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <AppQueryProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="Splash" options={{ headerShown: false }} />
+            <Stack.Screen name="Onboarding" options={{ headerShown: false }} />
+            <Stack.Screen name="Login" options={{ headerShown: false }} />
+            <Stack.Screen name="Register" options={{ headerShown: false }} />
+            <Stack.Screen name="ProfileUpdate" options={{ headerShown: false }} />
+            <Stack.Screen name="CareerPath" options={{ headerShown: false }} />
+            <Stack.Screen name="ResetPassword" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          </Stack>
+          <AlertToast />
+        </AppQueryProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

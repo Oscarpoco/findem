@@ -2,8 +2,8 @@ import { Text, View } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Button, StyleSheet } from "react-native";
+import { useAuthStore } from "@/src/state/authStore";
 
 export const screenOptions = {
   title: "index",
@@ -14,13 +14,10 @@ export default function Home() {
   const router = useRouter();
 
   const colorScheme = useColorScheme();
+  const logout = useAuthStore((s) => s.logout);
 
   const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem("findem_is_authenticated");
-    } catch (error) {
-      if (__DEV__) console.warn("Failed to clear auth flag on logout:", error);
-    }
+    await logout();
     router.replace("/Login");
   };
 

@@ -13,8 +13,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { useAuthStore } from "@/src/state/authStore";
+import { useOnboardingStore } from "@/src/state/onboardingStore";
 
 export const screenOptions = {
   title: "Splash",
@@ -22,8 +23,6 @@ export const screenOptions = {
 };
 
 const { width } = Dimensions.get("window");
-const ONBOARDING_KEY = "findem_onboarding_completed";
-const AUTH_KEY = "findem_is_authenticated";
 const EXPO_PUBLIC_API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function SplashScreen() {
@@ -46,6 +45,10 @@ export default function SplashScreen() {
 
   /* ─── HELPERS ─── */
   const wakeUpServer = async (): Promise<boolean> => {
+    if (!EXPO_PUBLIC_API_URL) {
+      console.error("API_BASE_URL is not set");
+      return true;
+    }
     setIsLoading(true);
     try {
       const response = await axios.get(`${EXPO_PUBLIC_API_URL}`);
@@ -58,18 +61,22 @@ export default function SplashScreen() {
     }
   };
 
-  const readBooleanFlag = async (key: string): Promise<boolean> => {
-    try {
-      const value = await AsyncStorage.getItem(key);
-      return value === "true";
-    } catch (error) {
-      if (__DEV__) console.warn(`Error reading flag for ${key}:`, error);
-      return false;
-    }
-  };
-
   useEffect(() => {
     let cancelled = false;
+
+    const hydrateStores = async () => {
+      const authPersist = (useAuthStore as any).persist;
+      const onboardingPersist = (useOnboardingStore as any).persist;
+
+      try {
+        await Promise.all([
+          authPersist?.rehydrate?.(),
+          onboardingPersist?.rehydrate?.(),
+        ]);
+      } catch (error) {
+        if (__DEV__) console.warn("Store hydration failed:", error);
+      }
+    };
 
     const animation = Animated.sequence([
       Animated.delay(200),
@@ -123,23 +130,25 @@ export default function SplashScreen() {
         animation.start(() => resolve())
       );
 
-      const [serverReady, hasOnboarded, isAuthenticated] = await Promise.all([
-        wakeUpServer(),
-        readBooleanFlag(ONBOARDING_KEY),
-        readBooleanFlag(AUTH_KEY),
-        animationPromise,
-      ]);
+      const hydrationPromise = hydrateStores();
+      const serverPromise = wakeUpServer();
+
+      await Promise.all([animationPromise, hydrationPromise, serverPromise]);
 
       if (cancelled) return;
 
-      if (!serverReady) {
-        if (__DEV__) console.warn("Server not ready — staying on splash.");
-        return;
-      }
+      const auth = useAuthStore.getState();
+      const onboarding = useOnboardingStore.getState();
 
-      if (isAuthenticated) {
-        router.replace("/(tabs)");
-      } else if (hasOnboarded) {
+      if (auth.isAuthenticated) {
+        if (!auth.profileCompleted) {
+          router.replace("/ProfileUpdate");
+        } else if (!auth.careerCompleted) {
+          router.replace("/CareerPath");
+        } else {
+          router.replace("/(tabs)");
+        }
+      } else if (onboarding.completed) {
         router.replace("/Login");
       } else {
         router.replace("/Onboarding");
