@@ -313,11 +313,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 48,
-    position: "relative",
+    position: "relative"
   },
   headerDivider: {
     position: "absolute",
-    width: '95%',
+    width: '90%',
     height: 34,
     backgroundColor: "red",
     left: 5,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    width: "83%",
+    width: "84%",
     borderRadius: 50,
     paddingVertical: 6,
     paddingHorizontal: 6,

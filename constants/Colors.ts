@@ -10,6 +10,7 @@ const Colors = {
     background: '#FFFFFF',
     card: '#F8F8F8',
     surface: '#FFFFFF',
+    opacity: 'rgba(255, 255, 255, .5)',
 
     // TEXTS
     text: '#000000',
@@ -51,6 +52,7 @@ const Colors = {
     background: '#000000',
     card: '#121212',
     surface: '#1E1E1E',
+    opacity: 'rgba(0, 0, 0, .5)',
 
     // TEXTS
     text: '#FFFFFF',
