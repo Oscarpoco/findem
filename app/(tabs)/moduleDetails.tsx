@@ -4,7 +4,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   Animated,
   Dimensions,
@@ -33,30 +34,36 @@ const FloatingOrb = ({
   const floatAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 800,
-      delay,
-      useNativeDriver: true,
-    }).start();
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, {
-          toValue: 1,
-          duration: 3000 + delay * 0.5,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAnim, {
-          toValue: 0,
-          duration: 3000 + delay * 0.5,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      floatAnim.setValue(0);
+      fadeAnim.setValue(0);
+
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        delay,
+        useNativeDriver: true,
+      }).start();
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(floatAnim, {
+            toValue: 1,
+            duration: 3000 + delay * 0.5,
+            useNativeDriver: true,
+          }),
+          Animated.timing(floatAnim, {
+            toValue: 0,
+            duration: 3000 + delay * 0.5,
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+      loop.start();
+
+      return () => loop.stop();
+    }, [delay]),
+  );
 
   return (
     <Animated.View
@@ -98,22 +105,31 @@ const ListItem = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateAnim = useRef(new Animated.Value(16)).current;
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 350,
-        delay: 300 + index * 80,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateAnim, {
-        toValue: 0,
-        duration: 350,
-        delay: 300 + index * 80,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fadeAnim.setValue(0);
+      translateAnim.setValue(16);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 350,
+          delay: 300 + index * 80,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateAnim, {
+          toValue: 0,
+          duration: 350,
+          delay: 300 + index * 80,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      return () => {
+        fadeAnim.stopAnimation();
+        translateAnim.stopAnimation();
+      };
+    }, [index]),
+  );
 
   return (
     <Animated.View
@@ -141,23 +157,33 @@ const TopicTag = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        delay: 250 + index * 60,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        delay: 250 + index * 60,
-        tension: 60,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fadeAnim.setValue(0);
+      scaleAnim.setValue(0.85);
+
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          delay: 250 + index * 60,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          delay: 250 + index * 60,
+          tension: 60,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      return () => {
+        fadeAnim.stopAnimation();
+        scaleAnim.stopAnimation();
+      };
+    }, [index]),
+  );
 
   return (
     <Animated.View
@@ -195,44 +221,59 @@ export default function ModuleDetailScreen() {
   const contentAnim = useRef(new Animated.Value(0)).current;
   const btnScale = useRef(new Animated.Value(1)).current;
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(headerAnim, {
+  useFocusEffect(
+    useCallback(() => {
+      headerAnim.setValue(0);
+      headerY.setValue(-20);
+      heroAnim.setValue(0);
+      heroY.setValue(24);
+      contentAnim.setValue(0);
+      btnScale.setValue(1);
+
+      Animated.parallel([
+        Animated.timing(headerAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.spring(headerY, {
+          toValue: 0,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      Animated.parallel([
+        Animated.timing(heroAnim, {
+          toValue: 1,
+          duration: 600,
+          delay: 100,
+          useNativeDriver: true,
+        }),
+        Animated.spring(heroY, {
+          toValue: 0,
+          delay: 100,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      Animated.timing(contentAnim, {
         toValue: 1,
         duration: 500,
+        delay: 250,
         useNativeDriver: true,
-      }),
-      Animated.spring(headerY, {
-        toValue: 0,
-        tension: 50,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
+      }).start();
 
-    Animated.parallel([
-      Animated.timing(heroAnim, {
-        toValue: 1,
-        duration: 600,
-        delay: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(heroY, {
-        toValue: 0,
-        delay: 100,
-        tension: 50,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    Animated.timing(contentAnim, {
-      toValue: 1,
-      duration: 500,
-      delay: 250,
-      useNativeDriver: true,
-    }).start();
-  }, []);
+      return () => {
+        headerAnim.stopAnimation();
+        heroAnim.stopAnimation();
+        contentAnim.stopAnimation();
+      };
+    }, [task.id]),
+  );
 
   const handleComplete = () => {
     Animated.sequence([

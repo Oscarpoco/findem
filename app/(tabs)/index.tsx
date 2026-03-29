@@ -6,7 +6,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   Animated,
   Dimensions,
@@ -38,23 +39,31 @@ const StatPill = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.7)).current;
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 500,
-        delay,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        delay,
-        tension: 60,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fadeAnim.setValue(0);
+      scaleAnim.setValue(0.7);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 500,
+          delay,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          delay,
+          tension: 60,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      return () => {
+        fadeAnim.stopAnimation();
+      };
+    }, [delay]),
+  );
 
   return (
     <Animated.View
@@ -81,14 +90,21 @@ const ProgressBar = ({
 }) => {
   const widthAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    Animated.timing(widthAnim, {
-      toValue: progress,
-      duration: 1000,
-      delay: 600,
-      useNativeDriver: false,
-    }).start();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      widthAnim.setValue(0);
+      Animated.timing(widthAnim, {
+        toValue: progress,
+        duration: 1000,
+        delay: 600,
+        useNativeDriver: false,
+      }).start();
+
+      return () => {
+        widthAnim.stopAnimation();
+      };
+    }, [progress]),
+  );
 
   if (progress === 0) return null;
 
@@ -123,23 +139,34 @@ const TaskCard = ({ task, index }: any) => {
   const isComplete = task.progress === 100;
   const router = useRouter();
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(translateX, {
-        toValue: 0,
-        delay: index * 120,
-        tension: 55,
-        friction: 9,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 400,
-        delay: index * 120,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      translateX.setValue(index % 2 === 0 ? -SCREEN_WIDTH : SCREEN_WIDTH);
+      opacity.setValue(0);
+      pressScale.setValue(1);
+
+      Animated.parallel([
+        Animated.spring(translateX, {
+          toValue: 0,
+          delay: index * 120,
+          tension: 55,
+          friction: 9,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 400,
+          delay: index * 120,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      return () => {
+        translateX.stopAnimation();
+        opacity.stopAnimation();
+      };
+    }, [index, SCREEN_WIDTH]),
+  );
 
   const onPressIn = () =>
     Animated.spring(pressScale, {
