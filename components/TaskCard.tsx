@@ -38,11 +38,20 @@ interface TaskCardProps {
 }
 
 // ─── Dotted Connector ──────────────────────────────────────────────────────────
-const DottedConnector = ({ isRight }: { isRight: boolean }) => {
+const DottedConnector = ({
+  isRight,
+  gradient,
+}: {
+  isRight: boolean;
+  gradient: [string, string];
+}) => {
   return (
     <View style={[styles.connector, isRight && styles.connectorRight]}>
       {Array.from({ length: 10 }).map((_, i) => (
-        <View key={i} style={styles.connectorDot} />
+        <View
+          key={i}
+          style={[styles.connectorDot, { backgroundColor: gradient[0] + "40" }]}
+        />
       ))}
     </View>
   );
@@ -278,7 +287,9 @@ export const TaskCard = ({
 
       {isRight && <WeekCircle />}
 
-      {showConnector && <DottedConnector isRight={isRight} />}
+      {showConnector && (
+        <DottedConnector isRight={isRight} gradient={task.gradient} />
+      )}
     </Animated.View>
   );
 };
@@ -473,7 +484,7 @@ const styles = StyleSheet.create({
   },
   connector: {
     position: "absolute",
-    left: 24, 
+    left: 24,
     top: "75%",
     alignItems: "center",
     zIndex: -1,
@@ -485,7 +496,6 @@ const styles = StyleSheet.create({
   connectorDot: {
     width: 5,
     height: 4,
-    backgroundColor: "#0d66d367",
     marginVertical: 1,
     borderRadius: 1,
   },
