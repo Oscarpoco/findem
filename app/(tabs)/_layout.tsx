@@ -43,6 +43,20 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      <Tabs.Screen
+        name="moduleDetails"
+        options={{
+          header: () => null,
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name="chevron.left.forwardslash.chevron.right"
+              tintColor={color}
+              size={28}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
