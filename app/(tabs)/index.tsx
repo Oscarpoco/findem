@@ -1,67 +1,68 @@
 import { Text, View } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
+import { useAuthStore } from "@/src/state/authStore";
+import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useEffect, useRef } from "react";
 import {
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
   Animated,
   Dimensions,
+  ScrollView,
   StatusBar,
+  StyleSheet,
+  TouchableOpacity,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
-import { useRef, useEffect } from "react";
-import { useAuthStore } from "@/src/state/authStore";
 
 export const screenOptions = {
   title: "index",
   headerShown: false,
 };
 
+import { learningTasks } from "@/src/data/learningTasks";
+
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-const learningTasks = [
-  {
-    id: 1,
-    week: "01",
-    title: "HTML & CSS",
-    subtitle: "Responsive design fundamentals",
-    dueDate: "APR 5",
-    difficulty: "BEGINNER",
-    progress: 100,
-    gradient: ["#0EA5E9", "#0284C7"] as [string, string],
-    accentColor: "#38BDF8",
-  },
-  {
-    id: 2,
-    week: "02",
-    title: "JavaScript",
-    subtitle: "DOM & async programming",
-    dueDate: "APR 12",
-    difficulty: "BEGINNER",
-    progress: 30,
-    gradient: ["#7C3AED", "#5B21B6"] as [string, string],
-    accentColor: "#A78BFA",
-  }
-];
-
 // ─── Stat Pill ────────────────────────────────────────────────────────────────
-const StatPill = ({ value, label, delay }: { value: string; label: string; delay: number }) => {
+const StatPill = ({
+  value,
+  label,
+  delay,
+}: {
+  value: string;
+  label: string;
+  delay: number;
+}) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.7)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, delay, useNativeDriver: true }),
-      Animated.spring(scaleAnim, { toValue: 1, delay, tension: 60, friction: 8, useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        delay,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        delay,
+        tension: 60,
+        friction: 8,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
   return (
-    <Animated.View style={[styles.statPill, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
+    <Animated.View
+      style={[
+        styles.statPill,
+        { opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
+      ]}
+    >
       <BlurView intensity={10} tint="light" style={styles.statPillBlur}>
         <Text style={styles.statValue}>{value}</Text>
         <Text style={styles.statLabel}>{label}</Text>
@@ -71,7 +72,13 @@ const StatPill = ({ value, label, delay }: { value: string; label: string; delay
 };
 
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
-const ProgressBar = ({ progress, accentColor }: { progress: number; accentColor: string }) => {
+const ProgressBar = ({
+  progress,
+  accentColor,
+}: {
+  progress: number;
+  accentColor: string;
+}) => {
   const widthAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -92,7 +99,10 @@ const ProgressBar = ({ progress, accentColor }: { progress: number; accentColor:
           styles.progressBarFill,
           {
             backgroundColor: accentColor,
-            width: widthAnim.interpolate({ inputRange: [0, 100], outputRange: ["0%", "100%"] }),
+            width: widthAnim.interpolate({
+              inputRange: [0, 100],
+              outputRange: ["0%", "100%"],
+            }),
           },
         ]}
       />
@@ -102,7 +112,9 @@ const ProgressBar = ({ progress, accentColor }: { progress: number; accentColor:
 
 // ─── Task Card ────────────────────────────────────────────────────────────────
 const TaskCard = ({ task, index }: any) => {
-  const translateX = useRef(new Animated.Value(index % 2 === 0 ? -SCREEN_WIDTH : SCREEN_WIDTH)).current;
+  const translateX = useRef(
+    new Animated.Value(index % 2 === 0 ? -SCREEN_WIDTH : SCREEN_WIDTH),
+  ).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const pressScale = useRef(new Animated.Value(1)).current;
 
@@ -129,17 +141,32 @@ const TaskCard = ({ task, index }: any) => {
   }, []);
 
   const onPressIn = () =>
-    Animated.spring(pressScale, { toValue: 0.97, useNativeDriver: true, tension: 100, friction: 5 }).start();
+    Animated.spring(pressScale, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      tension: 100,
+      friction: 5,
+    }).start();
   const onPressOut = () =>
-    Animated.spring(pressScale, { toValue: 1, useNativeDriver: true, tension: 80, friction: 6 }).start();
+    Animated.spring(pressScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 80,
+      friction: 6,
+    }).start();
 
   const WeekCircle = () => (
-
     <Animated.View style={styles.weekWrapper}>
       <Text style={styles.weekLabel}>WEEK</Text>
 
       <BlurView intensity={20} tint="light" style={styles.weekCircle}>
-        <Text style={styles.weekCircleNum}>{isComplete ? <Ionicons name="checkmark-done" size={32} color="#10B981" /> : task.week}</Text>
+        <Text style={styles.weekCircleNum}>
+          {isComplete ? (
+            <Ionicons name="checkmark-done" size={32} color="#10B981" />
+          ) : (
+            task.week
+          )}
+        </Text>
       </BlurView>
     </Animated.View>
   );
@@ -171,7 +198,6 @@ const TaskCard = ({ task, index }: any) => {
           {/* Top: title + date/lock */}
           <View style={styles.cardTopRow}>
             <View style={styles.cardTitleBlock}>
-
               <Text style={styles.cardTitle}>{task.title}</Text>
               <Text style={styles.cardSubtitle}>{task.subtitle}</Text>
             </View>
@@ -182,7 +208,11 @@ const TaskCard = ({ task, index }: any) => {
               </View>
               {isLocked && (
                 <View style={styles.lockIcon}>
-                  <Ionicons name="lock-closed" size={13} color="rgba(255,255,255,0.7)" />
+                  <Ionicons
+                    name="lock-closed"
+                    size={13}
+                    color="rgba(255,255,255,0.7)"
+                  />
                 </View>
               )}
             </View>
@@ -191,14 +221,21 @@ const TaskCard = ({ task, index }: any) => {
           {/* Bottom: difficulty + progress + chevron */}
           <View style={styles.cardBottomRow}>
             <BlurView intensity={20} tint="dark" style={styles.diffBadge}>
-              <View style={[styles.diffDot, { backgroundColor: task.accentColor }]} />
+              <View
+                style={[styles.diffDot, { backgroundColor: task.accentColor }]}
+              />
               <Text style={styles.diffText}>{task.difficulty}</Text>
             </BlurView>
 
             <View style={styles.progressSection}>
-              <ProgressBar progress={task.progress} accentColor={task.accentColor} />
+              <ProgressBar
+                progress={task.progress}
+                accentColor={task.accentColor}
+              />
               {task.progress > 0 && (
-                <Text style={[styles.progressPct, { color: task.accentColor }]}>{task.progress}%</Text>
+                <Text style={[styles.progressPct, { color: task.accentColor }]}>
+                  {task.progress}%
+                </Text>
               )}
             </View>
 
@@ -217,18 +254,41 @@ const TaskCard = ({ task, index }: any) => {
 
 // ─── Floating Orb ─────────────────────────────────────────────────────────────
 const FloatingOrb = ({
-  color, size, top, left, delay,
-}: { color: string; size: number; top: number; left: number; delay: number }) => {
+  color,
+  size,
+  top,
+  left,
+  delay,
+}: {
+  color: string;
+  size: number;
+  top: number;
+  left: number;
+  delay: number;
+}) => {
   const floatAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 800, delay, useNativeDriver: true }).start();
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      delay,
+      useNativeDriver: true,
+    }).start();
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(floatAnim, { toValue: 1, duration: 3000 + delay * 0.5, useNativeDriver: true }),
-        Animated.timing(floatAnim, { toValue: 0, duration: 3000 + delay * 0.5, useNativeDriver: true }),
-      ])
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 3000 + delay * 0.5,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 3000 + delay * 0.5,
+          useNativeDriver: true,
+        }),
+      ]),
     );
     loop.start();
     return () => loop.stop();
@@ -244,8 +304,18 @@ const FloatingOrb = ({
         height: size,
         borderRadius: size / 2,
         backgroundColor: color,
-        opacity: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.12] }),
-        transform: [{ translateY: floatAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -20] }) }],
+        opacity: fadeAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 0.12],
+        }),
+        transform: [
+          {
+            translateY: floatAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, -20],
+            }),
+          },
+        ],
       }}
     />
   );
@@ -260,9 +330,17 @@ const UnlockButton = () => {
     if (!allComplete) return;
     const pulse = Animated.loop(
       Animated.sequence([
-        Animated.timing(scaleAnim, { toValue: 1.03, duration: 900, useNativeDriver: true }),
-        Animated.timing(scaleAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
-      ])
+        Animated.timing(scaleAnim, {
+          toValue: 1.03,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
     );
     pulse.start();
     return () => pulse.stop();
@@ -270,15 +348,27 @@ const UnlockButton = () => {
 
   const onPressIn = () => {
     if (!allComplete) return;
-    Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true, tension: 100, friction: 5 }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      tension: 100,
+      friction: 5,
+    }).start();
   };
   const onPressOut = () => {
     if (!allComplete) return;
-    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, tension: 80, friction: 6 }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 80,
+      friction: 6,
+    }).start();
   };
 
   return (
-    <Animated.View style={[styles.unlockWrap, { transform: [{ scale: scaleAnim }] }]}>
+    <Animated.View
+      style={[styles.unlockWrap, { transform: [{ scale: scaleAnim }] }]}
+    >
       <TouchableOpacity
         activeOpacity={allComplete ? 0.85 : 1}
         onPressIn={onPressIn}
@@ -300,10 +390,17 @@ const UnlockButton = () => {
               style={{ marginRight: 10 }}
             />
             <Text style={[styles.unlockText, !allComplete && { opacity: 0.7 }]}>
-              {allComplete ? "Unlock Opportunities" : "Complete All Modules to Unlock"}
+              {allComplete
+                ? "Unlock Opportunities"
+                : "Complete All Modules to Unlock"}
             </Text>
             {allComplete && (
-              <Ionicons name="chevron-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="#fff"
+                style={{ marginLeft: 8 }}
+              />
             )}
           </View>
         </LinearGradient>
@@ -326,13 +423,33 @@ export default function Home() {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(headerOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.spring(headerTranslateY, { toValue: 0, tension: 50, friction: 8, useNativeDriver: true }),
+      Animated.timing(headerOpacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(headerTranslateY, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
     ]).start();
 
     Animated.parallel([
-      Animated.timing(heroOpacity, { toValue: 1, duration: 700, delay: 200, useNativeDriver: true }),
-      Animated.spring(heroTranslateY, { toValue: 0, delay: 200, tension: 50, friction: 8, useNativeDriver: true }),
+      Animated.timing(heroOpacity, {
+        toValue: 1,
+        duration: 700,
+        delay: 200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(heroTranslateY, {
+        toValue: 0,
+        delay: 200,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
@@ -340,7 +457,13 @@ export default function Home() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      <FloatingOrb color="#0EA5E9" size={600} top={-180} left={-100} delay={0} />
+      <FloatingOrb
+        color="#0EA5E9"
+        size={600}
+        top={-180}
+        left={-100}
+        delay={0}
+      />
 
       {/* Header */}
       <Animated.View
@@ -348,15 +471,11 @@ export default function Home() {
           styles.headerWrapper,
           {
             opacity: headerOpacity,
-            transform: [{ translateY: headerTranslateY }]
-          }
+            transform: [{ translateY: headerTranslateY }],
+          },
         ]}
       >
-        <BlurView
-          intensity={10}
-          tint="light"
-          style={styles.header}
-        >
+        <BlurView intensity={10} tint="light" style={styles.header}>
           <TouchableOpacity style={styles.avatarBtn}>
             <BlurView intensity={80} tint="light" style={styles.avatarBlur}>
               <Ionicons name="person-outline" size={24} color="#0F172A" />
@@ -370,7 +489,11 @@ export default function Home() {
           <TouchableOpacity style={styles.notifBtn}>
             <BlurView intensity={80} tint="light" style={styles.notifBlur}>
               <View style={styles.notifDot} />
-              <Ionicons name="notifications-outline" size={24} color="#0F172A" />
+              <Ionicons
+                name="notifications-outline"
+                size={24}
+                color="#0F172A"
+              />
             </BlurView>
           </TouchableOpacity>
         </BlurView>
@@ -384,11 +507,18 @@ export default function Home() {
       >
         {/* Hero */}
         <Animated.View
-          style={[styles.hero, { opacity: heroOpacity, transform: [{ translateY: heroTranslateY }] }]}
+          style={[
+            styles.hero,
+            {
+              opacity: heroOpacity,
+              transform: [{ translateY: heroTranslateY }],
+            },
+          ]}
         >
           <Text style={styles.heroHeading}>Software{"\n"}Development</Text>
           <Text style={styles.heroDesc}>
-            Master full-stack engineering from fundamentals to production deployment.
+            Master full-stack engineering from fundamentals to production
+            deployment.
           </Text>
           <View style={styles.statsRow}>
             <StatPill value="5" label="MODULES" delay={300} />
@@ -403,14 +533,17 @@ export default function Home() {
             <Text style={styles.sectionTitle}>Learning Path</Text>
             <Text style={styles.sectionSub}>5 modules · 10 weeks</Text>
           </View>
-          <TouchableOpacity style={styles.seeAllBtn} onPress={() => router.navigate('/(tabs)/modules')}>
+          <TouchableOpacity
+            style={styles.seeAllBtn}
+            onPress={() => router.navigate("/(tabs)/modules")}
+          >
             <Text style={styles.seeAllText}>See All</Text>
             <Ionicons name="chevron-forward" size={14} color="#0EA5E9" />
           </TouchableOpacity>
         </Animated.View>
 
         {/* Cards */}
-        {learningTasks.map((task, index) => (
+        {learningTasks.slice(0, 2).map((task, index) => (
           <TaskCard key={task.id} task={task} index={index} />
         ))}
 
@@ -431,7 +564,7 @@ const styles = StyleSheet.create({
 
   // Header
   headerWrapper: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
@@ -460,7 +593,10 @@ const styles = StyleSheet.create({
   },
   headerCenter: { alignItems: "center", backgroundColor: "transparent" },
   headerLogo: {
-    fontSize: 32, color: "#0F172A", letterSpacing: -1, fontFamily: "GeomSemiBold",
+    fontSize: 32,
+    color: "#0F172A",
+    letterSpacing: -1,
+    fontFamily: "GeomSemiBold",
   },
   notifBtn: { borderRadius: 25, overflow: "hidden" },
   notifBlur: {
@@ -492,8 +628,21 @@ const styles = StyleSheet.create({
 
   // Hero
   hero: { marginTop: 8, marginBottom: 36, backgroundColor: "transparent" },
-  heroHeading: { fontSize: 38, fontWeight: "300", color: "#0F172A", lineHeight: 42, letterSpacing: -2, marginBottom: 14 },
-  heroDesc: { fontSize: 15, color: "#64748B", lineHeight: 22, marginBottom: 28, maxWidth: "85%" },
+  heroHeading: {
+    fontSize: 38,
+    fontWeight: "300",
+    color: "#0F172A",
+    lineHeight: 42,
+    letterSpacing: -2,
+    marginBottom: 14,
+  },
+  heroDesc: {
+    fontSize: 15,
+    color: "#64748B",
+    lineHeight: 22,
+    marginBottom: 28,
+    maxWidth: "85%",
+  },
   statsRow: { flexDirection: "row", gap: 12, backgroundColor: "transparent" },
   statPill: {
     flex: 1,
@@ -514,8 +663,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     overflow: "hidden",
   },
-  statValue: { fontSize: 26, fontWeight: "500", color: "#0F172A", letterSpacing: -1, marginBottom: 4 },
-  statLabel: { fontSize: 9, fontWeight: "400", color: "#64748B", letterSpacing: 1.5 },
+  statValue: {
+    fontSize: 26,
+    fontWeight: "500",
+    color: "#0F172A",
+    letterSpacing: -1,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 9,
+    fontWeight: "400",
+    color: "#64748B",
+    letterSpacing: 1.5,
+  },
 
   // Section header
   sectionHeader: {
@@ -525,7 +685,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: "transparent",
   },
-  sectionTitle: { fontSize: 22, fontWeight: "300", color: "#0F172A", letterSpacing: -0.8, marginBottom: 2 },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: "300",
+    color: "#0F172A",
+    letterSpacing: -0.8,
+    marginBottom: 2,
+  },
   sectionSub: { fontSize: 13, color: "#94A3B8", fontWeight: "200" },
   seeAllBtn: {
     flexDirection: "row",
@@ -563,15 +729,23 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  weekCircleNum: { fontSize: 18, fontWeight: "900", color: "#0F172A", letterSpacing: -0.5 },
-  weekWrapper: { justifyContent: 'center', alignItems: 'center', gap: 10 },
+  weekCircleNum: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#0F172A",
+    letterSpacing: -0.5,
+  },
+  weekWrapper: { justifyContent: "center", alignItems: "center", gap: 10 },
 
   // Card
   cardTouchable: { flex: 1, borderRadius: 38, overflow: "hidden" },
   cardGradient: { borderRadius: 38, padding: 18, paddingBottom: 14 },
   noiseOverlay: {
     position: "absolute",
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "rgba(255,255,255,0.08)",
     borderRadius: 24,
     borderWidth: 1,
@@ -585,13 +759,43 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   cardTitleBlock: { flex: 1, backgroundColor: "transparent" },
-  weekRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4, backgroundColor: "transparent" },
-  weekLabel: { fontSize: 15, fontWeight: "500", color: "rgba(7, 7, 7, 0.6)", letterSpacing: .5 },
-  weekNum: { fontSize: 10, fontWeight: "900", color: "rgba(255,255,255,0.95)", letterSpacing: 0.5 },
-  cardTitle: { fontSize: 20, fontWeight: "300", color: "#fff", letterSpacing: -0.8, marginBottom: 4 },
-  cardSubtitle: { fontSize: 12, color: "rgba(255,255,255,0.75)", lineHeight: 17 },
+  weekRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4,
+    backgroundColor: "transparent",
+  },
+  weekLabel: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "rgba(7, 7, 7, 0.6)",
+    letterSpacing: 0.5,
+  },
+  weekNum: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: "rgba(255,255,255,0.95)",
+    letterSpacing: 0.5,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: "300",
+    color: "#fff",
+    letterSpacing: -0.8,
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.75)",
+    lineHeight: 17,
+  },
 
-  cardRight: { alignItems: "flex-end", gap: 10, backgroundColor: "transparent" },
+  cardRight: {
+    alignItems: "flex-end",
+    gap: 10,
+    backgroundColor: "transparent",
+  },
   dateBadge: {
     backgroundColor: "rgba(255,255,255,0.25)",
     paddingHorizontal: 10,
@@ -600,7 +804,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.3)",
   },
-  dateText: { fontSize: 11, fontWeight: "300", color: "#fff", letterSpacing: 0.5 },
+  dateText: {
+    fontSize: 11,
+    fontWeight: "300",
+    color: "#fff",
+    letterSpacing: 0.5,
+  },
   lockIcon: {
     width: 28,
     height: 28,
@@ -634,7 +843,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.2)",
   },
   diffDot: { width: 6, height: 6, borderRadius: 3 },
-  diffText: { fontSize: 10, fontWeight: "300", color: "rgba(255,255,255,0.9)", letterSpacing: 0.8 },
+  diffText: {
+    fontSize: 10,
+    fontWeight: "300",
+    color: "rgba(255,255,255,0.9)",
+    letterSpacing: 0.8,
+  },
 
   progressSection: { flex: 1, backgroundColor: "transparent", gap: 4 },
   progressBarTrack: {
