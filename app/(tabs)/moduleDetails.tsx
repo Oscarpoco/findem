@@ -375,12 +375,17 @@ export default function ModuleDetailScreen() {
                       styles.progressFill,
                       {
                         width: `${task.progress}%` as any,
-                        backgroundColor: 'rgba(255,255,255,0.85)',
+                        backgroundColor: "rgba(255,255,255,0.85)",
                       },
                     ]}
                   />
                 </View>
-                <Text style={[styles.progressPct, { color: 'rgba(255,255,255,0.85)' }]}>
+                <Text
+                  style={[
+                    styles.progressPct,
+                    { color: "rgba(255,255,255,0.85)" },
+                  ]}
+                >
                   {task.progress}%
                 </Text>
               </View>
@@ -389,14 +394,21 @@ export default function ModuleDetailScreen() {
         </Animated.View>
 
         {/* ── Topics Covered ── */}
-        <Animated.View style={[styles.section, { opacity: contentAnim, backgroundColor: 'transparent' }]}>
-          <View style={[styles.sectionHeader, { backgroundColor: 'transparent' }]}>
+        <Animated.View
+          style={[
+            styles.section,
+            { opacity: contentAnim, backgroundColor: "transparent" },
+          ]}
+        >
+          <View
+            style={[styles.sectionHeader, { backgroundColor: "transparent" }]}
+          >
             <Text style={styles.sectionTitle}>Topics Covered</Text>
             <Text style={styles.sectionCount}>
               {task.content.topics.length} topics
             </Text>
           </View>
-          <View style={[styles.topicsWrap, { backgroundColor: 'transparent' }]}>
+          <View style={[styles.topicsWrap, { backgroundColor: "transparent" }]}>
             {task.content.topics.map((topic, idx) => (
               <TopicTag
                 key={idx}
@@ -471,76 +483,82 @@ export default function ModuleDetailScreen() {
           ))}
         </Animated.View>
 
-        <View style={{ height: 160 }} />
+        {/* ── Mark as Complete Button (not floating) ── */}
+        {!isCompleted && (
+          <Animated.View
+            style={[
+              styles.completeButtonContainer,
+              { transform: [{ scale: btnScale }] },
+            ]}
+          >
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handleComplete}
+              style={styles.ctaTouchable}
+            >
+              <LinearGradient
+                colors={["#10B981", "#059669"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.ctaGradient}
+              >
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={22}
+                    color="#fff"
+                    style={{ marginRight: 10 }}
+                  />
+                  <Text style={styles.ctaText}>MARK AS COMPLETE</Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={20}
+                    color="#fff"
+                    style={{ marginLeft: 8 }}
+                  />
+              </LinearGradient>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
       </ScrollView>
 
-      {/* ── Bottom CTA — same pattern as UnlockButton ── */}
-      <Animated.View
-        style={[styles.bottomBar, { transform: [{ scale: btnScale }] }]}
-      >
-        {!isCompleted ? (
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={handleComplete}
-            style={styles.ctaTouchable}
-          >
-            <LinearGradient
-              colors={["#10B981", "#059669"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.ctaGradient}
-            >
-              <View style={styles.ctaInner}>
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={22}
-                  color="#fff"
-                  style={{ marginRight: 10 }}
-                />
-                <Text style={styles.ctaText}>Mark as Complete</Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color="#fff"
-                  style={{ marginLeft: 8 }}
-                />
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-        ) : (
+      {/* ── Take Assessment Button (floating) ── */}
+      {isCompleted && (
+        <Animated.View
+          style={[styles.bottomBar, { transform: [{ scale: btnScale }] }]}
+        >
           <TouchableOpacity activeOpacity={0.85} style={styles.ctaTouchable}>
-            <LinearGradient
-              colors={["#8B5CF6", "#7C3AED"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.ctaGradient}
-            >
-              <View style={styles.ctaInner}>
+            <BlurView intensity={20} tint="dark" style={styles.ctaGradient}>
+              {/* <View style={styles.ctaInner}> */}
                 <Ionicons
                   name="clipboard-outline"
                   size={22}
-                  color="#fff"
+                  color="#1b1a1a"
                   style={{ marginRight: 10 }}
                 />
-                <Text style={styles.ctaText}>Take Assessment</Text>
+                <Text style={styles.ctaText}>TAKE ASSESSMENT</Text>
                 <Ionicons
                   name="chevron-forward"
                   size={20}
-                  color="#fff"
+                  color="#1b1a1a"
                   style={{ marginLeft: 8 }}
                 />
-              </View>
-            </LinearGradient>
+              {/* </View> */}
+            </BlurView>
           </TouchableOpacity>
-        )}
 
-        {isCompleted && (
-          <View style={styles.completedPill}>
-            <Ionicons name="checkmark-done" size={15} color="#10B981" />
-            <Text style={styles.completedText}>Module Completed</Text>
-          </View>
-        )}
-      </Animated.View>
+          <LinearGradient
+            colors={["rgba(16,185,129,0.1)", "rgba(16,185,129,0.05)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.completedPillGradient}
+          >
+            <BlurView intensity={20} tint="light" style={styles.completedPill}>
+              <Ionicons name="checkmark-done" size={15} color="#10B981" />
+              <Text style={styles.completedText}>MODULE COMPLETED</Text>
+            </BlurView>
+          </LinearGradient>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -554,7 +572,7 @@ const styles = StyleSheet.create({
   // ── Header — same as home/modules ──
 
   headerWrapper: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
@@ -787,10 +805,14 @@ const styles = StyleSheet.create({
   // ── Bottom CTA — same pattern as UnlockButton ──
   bottomBar: {
     position: "absolute",
-    bottom: 28,
+    bottom: 10,
     left: 15,
     right: 15,
     gap: 10,
+  },
+  completeButtonContainer: {
+    marginTop: 0,
+    marginBottom: 20,
   },
   ctaTouchable: {
     borderRadius: 28,
@@ -801,18 +823,18 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 10,
   },
-  ctaGradient: { borderRadius: 28 },
-  ctaInner: {
+  ctaGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 20,
     paddingHorizontal: 24,
+    borderRadius: 28,
   },
   ctaText: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#fff",
+    color: "#1b1a1a",
     letterSpacing: -0.3,
   },
 
@@ -822,10 +844,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     paddingVertical: 12,
-    backgroundColor: "rgba(255,255,255,0.7)",
+    paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "rgba(16,185,129,0.2)",
+    overflow: "hidden",
+  },
+  completedPillGradient: {
+    borderRadius: 20,
+    overflow: "hidden",
   },
   completedText: { fontSize: 13, fontWeight: "400", color: "#10B981" },
 });
