@@ -121,6 +121,7 @@ const TaskCard = ({ task, index }: any) => {
   const isRight = index % 2 !== 0;
   const isLocked = task.progress === 0;
   const isComplete = task.progress === 100;
+  const router = useRouter();
 
   useEffect(() => {
     Animated.parallel([
@@ -185,6 +186,7 @@ const TaskCard = ({ task, index }: any) => {
         activeOpacity={1}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
+        onPress={() => router.navigate(`/(tabs)/moduleDetails?id=${task.id}`)}
         style={styles.cardTouchable}
       >
         <LinearGradient

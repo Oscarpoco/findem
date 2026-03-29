@@ -62,6 +62,7 @@ const ProgressBar = ({
 
 // ─── Task Card — mirrors home screen exactly ──────────────────────────────────
 const TaskCard = ({ task, index }: any) => {
+  const router = useRouter();
   const translateX = useRef(
     new Animated.Value(index % 2 === 0 ? -SCREEN_WIDTH : SCREEN_WIDTH),
   ).current;
@@ -133,6 +134,7 @@ const TaskCard = ({ task, index }: any) => {
         activeOpacity={1}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
+        onPress={() => router.push(`/(tabs)/moduleDetails?id=${task.id}`)}
         style={styles.cardTouchable}
       >
         <LinearGradient
