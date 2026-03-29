@@ -1,10 +1,9 @@
 import { Text, View } from "@/components/Themed";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Animated,
     Dimensions,
@@ -15,226 +14,13 @@ import {
     TouchableOpacity,
 } from "react-native";
 
+import { TaskCard } from "@/components/TaskCard";
 import { learningTasks } from "@/src/data/learningTasks";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CIRCLE_SIZE = 52;
 
 const FILTERS = ["ALL", "BEGINNER", "INTERMEDIATE", "ADVANCED"];
-
-// ─── Progress Bar — exact match from home ─────────────────────────────────────
-const ProgressBar = ({
-  progress,
-  accentColor,
-}: {
-  progress: number;
-  accentColor: string;
-}) => {
-  const widthAnim = useRef(new Animated.Value(0)).current;
-
-  useFocusEffect(
-    useCallback(() => {
-      widthAnim.setValue(0);
-      Animated.timing(widthAnim, {
-        toValue: progress,
-        duration: 1000,
-        delay: 600,
-        useNativeDriver: false,
-      }).start();
-
-      return () => {
-        widthAnim.stopAnimation();
-      };
-    }, [progress]),
-  );
-
-  if (progress === 0) return null;
-
-  return (
-    <View style={styles.progressBarTrack}>
-      <Animated.View
-        style={[
-          styles.progressBarFill,
-          {
-            backgroundColor: accentColor,
-            width: widthAnim.interpolate({
-              inputRange: [0, 100],
-              outputRange: ["0%", "100%"],
-            }),
-          },
-        ]}
-      />
-    </View>
-  );
-};
-
-// ─── Task Card — mirrors home screen exactly ──────────────────────────────────
-const TaskCard = ({ task, index }: any) => {
-  const router = useRouter();
-  const translateX = useRef(
-    new Animated.Value(index % 2 === 0 ? -SCREEN_WIDTH : SCREEN_WIDTH),
-  ).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  const pressScale = useRef(new Animated.Value(1)).current;
-
-  const isRight = index % 2 !== 0;
-  const isLocked = task.progress === 0;
-  const isComplete = task.progress === 100;
-
-  useFocusEffect(
-    useCallback(() => {
-      translateX.setValue(index % 2 === 0 ? -SCREEN_WIDTH : SCREEN_WIDTH);
-      opacity.setValue(0);
-      pressScale.setValue(1);
-
-      Animated.parallel([
-        Animated.spring(translateX, {
-          toValue: 0,
-          delay: index * 100,
-          tension: 55,
-          friction: 9,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 400,
-          delay: index * 100,
-          useNativeDriver: true,
-        }),
-      ]).start();
-
-      return () => {
-        translateX.stopAnimation();
-        opacity.stopAnimation();
-      };
-    }, [index, SCREEN_WIDTH]),
-  );
-
-  const onPressIn = () =>
-    Animated.spring(pressScale, {
-      toValue: 0.97,
-      useNativeDriver: true,
-      tension: 100,
-      friction: 5,
-    }).start();
-  const onPressOut = () =>
-    Animated.spring(pressScale, {
-      toValue: 1,
-      useNativeDriver: true,
-      tension: 80,
-      friction: 6,
-    }).start();
-
-  const WeekCircle = () => (
-    <Animated.View style={styles.weekWrapper}>
-      <Text style={styles.weekLabel}>WEEK</Text>
-      <BlurView intensity={20} tint="light" style={styles.weekCircle}>
-        <Text style={styles.weekCircleNum}>
-          {isComplete ? (
-            <Ionicons name="checkmark-done" size={32} color="#10B981" />
-          ) : (
-            task.week
-          )}
-        </Text>
-      </BlurView>
-    </Animated.View>
-  );
-
-  return (
-    <Animated.View
-      style={[
-        styles.cardRowWrapper,
-        { opacity, transform: [{ translateX }, { scale: pressScale }] },
-      ]}
-    >
-      {!isRight && <WeekCircle />}
-
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        onPress={() => router.push(`/(tabs)/moduleDetails?id=${task.id}`)}
-        style={styles.cardTouchable}
-      >
-        <LinearGradient
-          colors={task.gradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.cardGradient}
-        >
-          <View style={styles.noiseOverlay} />
-
-          {/* Top row */}
-          <View style={styles.cardTopRow}>
-            <View style={styles.cardTitleBlock}>
-              <Text style={styles.cardTitle}>{task.title}</Text>
-              <Text style={styles.cardSubtitle}>{task.subtitle}</Text>
-              {/* Lesson + duration meta */}
-              <View style={styles.cardMeta}>
-                <Ionicons
-                  name="play-circle-outline"
-                  size={11}
-                  color="rgba(255,255,255,0.65)"
-                />
-                <Text style={styles.cardMetaText}>{task.lessons} lessons</Text>
-                <Text style={styles.cardMetaDot}>·</Text>
-                <Ionicons
-                  name="time-outline"
-                  size={11}
-                  color="rgba(255,255,255,0.65)"
-                />
-                <Text style={styles.cardMetaText}>{task.duration}</Text>
-              </View>
-            </View>
-
-            <View style={styles.cardRight}>
-              <View style={styles.dateBadge}>
-                <Text style={styles.dateText}>{task.dueDate}</Text>
-              </View>
-              {isLocked && (
-                <View style={styles.lockIcon}>
-                  <Ionicons
-                    name="lock-closed"
-                    size={13}
-                    color="rgba(255,255,255,0.7)"
-                  />
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Bottom row */}
-          <View style={styles.cardBottomRow}>
-            <BlurView intensity={20} tint="dark" style={styles.diffBadge}>
-              <View
-                style={[styles.diffDot, { backgroundColor: task.accentColor }]}
-              />
-              <Text style={styles.diffText}>{task.difficulty}</Text>
-            </BlurView>
-
-            <View style={styles.progressSection}>
-              <ProgressBar
-                progress={task.progress}
-                accentColor={task.accentColor}
-              />
-              {task.progress > 0 && (
-                <Text style={[styles.progressPct, { color: task.accentColor }]}>
-                  {task.progress}%
-                </Text>
-              )}
-            </View>
-
-            <BlurView intensity={25} tint="light" style={styles.arrowBtn}>
-              <Ionicons name="chevron-forward" size={18} color="#fff" />
-            </BlurView>
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
-
-      {isRight && <WeekCircle />}
-    </Animated.View>
-  );
-};
 
 // ─── Floating Orb — exact from home ──────────────────────────────────────────
 const FloatingOrb = ({
@@ -540,7 +326,14 @@ export default function ModulesScreen() {
           </View>
         ) : (
           filtered.map((task, index) => (
-            <TaskCard key={task.id} task={task} index={index} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              index={index}
+              showMeta={true}
+              cardStyle="modules"
+              onPress={() => router.push(`/(tabs)/moduleDetails?id=${task.id}`)}
+            />
           ))
         )}
 
@@ -724,188 +517,6 @@ const styles = StyleSheet.create({
   },
   resultsText: { fontSize: 13, fontWeight: "300", color: "#94A3B8" },
   clearText: { fontSize: 14, fontWeight: "400", color: "#0EA5E9" },
-
-  // ── Cards — exact home layout ──
-  cardRowWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  weekWrapper: { justifyContent: "center", alignItems: "center", gap: 10 },
-  weekLabel: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "rgba(7,7,7,0.6)",
-    letterSpacing: 0.5,
-  },
-  weekCircle: {
-    width: CIRCLE_SIZE,
-    height: CIRCLE_SIZE,
-    borderRadius: CIRCLE_SIZE / 2,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.7)",
-    backgroundColor: "rgba(200,210,255,0.25)",
-    overflow: "hidden",
-    marginHorizontal: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  weekCircleNum: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#0F172A",
-    letterSpacing: -0.5,
-  },
-
-  cardTouchable: { flex: 1, borderRadius: 38, overflow: "hidden" },
-  cardGradient: { borderRadius: 38, padding: 18, paddingBottom: 14 },
-  noiseOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderRadius: 38,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-  },
-
-  completeBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(255,255,255,0.25)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.35)",
-  },
-  completeBadgeText: {
-    fontSize: 9,
-    fontWeight: "500",
-    color: "#fff",
-    letterSpacing: 1.2,
-  },
-
-  cardTopRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 14,
-    backgroundColor: "transparent",
-  },
-  cardTitleBlock: { flex: 1, backgroundColor: "transparent" },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: "300",
-    color: "#fff",
-    letterSpacing: -0.8,
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.75)",
-    lineHeight: 17,
-    marginBottom: 8,
-  },
-  cardMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "transparent",
-  },
-  cardMetaText: {
-    fontSize: 11,
-    fontWeight: "300",
-    color: "rgba(255,255,255,0.65)",
-  },
-  cardMetaDot: { fontSize: 11, color: "rgba(255,255,255,0.4)" },
-
-  cardRight: {
-    alignItems: "flex-end",
-    gap: 10,
-    backgroundColor: "transparent",
-  },
-  dateBadge: {
-    backgroundColor: "rgba(255,255,255,0.25)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.3)",
-  },
-  dateText: {
-    fontSize: 11,
-    fontWeight: "300",
-    color: "#fff",
-    letterSpacing: 0.5,
-  },
-  lockIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(0,0,0,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-  },
-
-  cardBottomRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: "transparent",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.15)",
-    paddingTop: 12,
-  },
-  diffBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-    overflow: "hidden",
-    backgroundColor: "rgba(0,0,0,0.2)",
-  },
-  diffDot: { width: 6, height: 6, borderRadius: 3 },
-  diffText: {
-    fontSize: 10,
-    fontWeight: "300",
-    color: "rgba(255,255,255,0.9)",
-    letterSpacing: 0.8,
-  },
-
-  progressSection: { flex: 1, backgroundColor: "transparent", gap: 4 },
-  progressBarTrack: {
-    height: 5,
-    backgroundColor: "rgba(255,255,255,0.25)",
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressBarFill: { height: "100%", borderRadius: 4 },
-  progressPct: { fontSize: 10, fontWeight: "800" },
-
-  arrowBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.35)",
-    overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.15)",
-  },
 
   // Empty
   emptyWrap: { alignItems: "center", paddingTop: 80, gap: 8 },
