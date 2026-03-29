@@ -31,7 +31,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="modules"
         options={{
           header: () => null,
           tabBarIcon: ({ color }) => (

@@ -106,8 +106,9 @@ const TaskCard = ({ task, index }: any) => {
   const opacity = useRef(new Animated.Value(0)).current;
   const pressScale = useRef(new Animated.Value(1)).current;
 
-  const isRight = index % 2 !== 0; // odd → circle on right
+  const isRight = index % 2 !== 0;
   const isLocked = task.progress === 0;
+  const isComplete = task.progress === 100;
 
   useEffect(() => {
     Animated.parallel([
@@ -138,7 +139,7 @@ const TaskCard = ({ task, index }: any) => {
       <Text style={styles.weekLabel}>WEEK</Text>
 
       <BlurView intensity={20} tint="light" style={styles.weekCircle}>
-        <Text style={styles.weekCircleNum}>{task.week}</Text>
+        <Text style={styles.weekCircleNum}>{isComplete ? <Ionicons name="checkmark-done" size={32} color="#10B981" /> : task.week}</Text>
       </BlurView>
     </Animated.View>
   );
@@ -170,10 +171,7 @@ const TaskCard = ({ task, index }: any) => {
           {/* Top: title + date/lock */}
           <View style={styles.cardTopRow}>
             <View style={styles.cardTitleBlock}>
-              {/* <View style={styles.weekRow}>
-                <Text style={styles.weekLabel}>WEEK</Text>
-                <Text style={styles.weekNum}>{task.week}</Text>
-              </View> */}
+
               <Text style={styles.cardTitle}>{task.title}</Text>
               <Text style={styles.cardSubtitle}>{task.subtitle}</Text>
             </View>
@@ -343,29 +341,39 @@ export default function Home() {
       <StatusBar barStyle="dark-content" />
 
       <FloatingOrb color="#0EA5E9" size={600} top={-180} left={-100} delay={0} />
-      {/* <FloatingOrb color="#DB2777" size={180} top={500} left={-40} delay={300} /> */}
-      {/* <FloatingOrb color="#D97706" size={150} top={800} left={SCREEN_WIDTH - 80} delay={800} /> */}
 
       {/* Header */}
       <Animated.View
-        style={[styles.header, { opacity: headerOpacity, transform: [{ translateY: headerTranslateY }] }]}
+        style={[
+          styles.headerWrapper,
+          {
+            opacity: headerOpacity,
+            transform: [{ translateY: headerTranslateY }]
+          }
+        ]}
       >
-        <TouchableOpacity style={styles.avatarBtn}>
-          <BlurView intensity={50} tint="light" style={styles.avatarBlur}>
-            <Ionicons name="person-outline" size={24} color="#0F172A" />
-          </BlurView>
-        </TouchableOpacity>
+        <BlurView
+          intensity={10}
+          tint="light"
+          style={styles.header}
+        >
+          <TouchableOpacity style={styles.avatarBtn}>
+            <BlurView intensity={80} tint="light" style={styles.avatarBlur}>
+              <Ionicons name="person-outline" size={24} color="#0F172A" />
+            </BlurView>
+          </TouchableOpacity>
 
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerLogo}>Findem</Text>
-        </View>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerLogo}>Findem</Text>
+          </View>
 
-        <TouchableOpacity style={styles.notifBtn}>
-          <BlurView intensity={50} tint="light" style={styles.notifBlur}>
-            <View style={styles.notifDot} />
-            <Ionicons name="notifications-outline" size={24} color="#0F172A" />
-          </BlurView>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.notifBtn}>
+            <BlurView intensity={80} tint="light" style={styles.notifBlur}>
+              <View style={styles.notifDot} />
+              <Ionicons name="notifications-outline" size={24} color="#0F172A" />
+            </BlurView>
+          </TouchableOpacity>
+        </BlurView>
       </Animated.View>
 
       {/* Scroll */}
@@ -395,7 +403,7 @@ export default function Home() {
             <Text style={styles.sectionTitle}>Learning Path</Text>
             <Text style={styles.sectionSub}>5 modules · 10 weeks</Text>
           </View>
-          <TouchableOpacity style={styles.seeAllBtn}>
+          <TouchableOpacity style={styles.seeAllBtn} onPress={() => router.navigate('/(tabs)/modules')}>
             <Text style={styles.seeAllText}>See All</Text>
             <Ionicons name="chevron-forward" size={14} color="#0EA5E9" />
           </TouchableOpacity>
@@ -422,6 +430,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F0F4FF" },
 
   // Header
+  headerWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+  },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -443,7 +459,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   headerCenter: { alignItems: "center", backgroundColor: "transparent" },
-  headerLogo: { fontSize: 32,  color: "#0F172A", letterSpacing: -1,fontFamily: "GeomSemiBold",
+  headerLogo: {
+    fontSize: 32, color: "#0F172A", letterSpacing: -1, fontFamily: "GeomSemiBold",
   },
   notifBtn: { borderRadius: 25, overflow: "hidden" },
   notifBlur: {
@@ -470,7 +487,7 @@ const styles = StyleSheet.create({
   },
 
   // Scroll
-  scroll: { flex: 1 },
+  scroll: { flex: 1, paddingTop: 140 },
   scrollContent: { paddingHorizontal: 15 },
 
   // Hero
