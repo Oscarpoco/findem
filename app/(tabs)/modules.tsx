@@ -332,6 +332,7 @@ export default function ModulesScreen() {
               index={index}
               showMeta={true}
               cardStyle="modules"
+              showConnector={index < filtered.length - 1}
               onPress={() => router.push(`/(tabs)/moduleDetails?id=${task.id}`)}
             />
           ))

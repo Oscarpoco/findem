@@ -34,9 +34,19 @@ interface TaskCardProps {
   showMeta?: boolean;
   onPress?: () => void;
   cardStyle?: "index" | "modules";
+  showConnector?: boolean;
 }
 
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
+// ─── Dotted Connector ──────────────────────────────────────────────────────────
+const DottedConnector = ({ isRight }: { isRight: boolean }) => {
+  return (
+    <View style={[styles.connector, isRight && styles.connectorRight]}>
+      {Array.from({ length: 10 }).map((_, i) => (
+        <View key={i} style={styles.connectorDot} />
+      ))}
+    </View>
+  );
+};
 export const ProgressBar = ({
   progress,
   accentColor,
@@ -89,6 +99,7 @@ export const TaskCard = ({
   showMeta = false,
   onPress,
   cardStyle = "modules",
+  showConnector = false,
 }: TaskCardProps) => {
   const translateX = useRef(
     new Animated.Value(index % 2 === 0 ? -SCREEN_WIDTH : SCREEN_WIDTH),
@@ -266,6 +277,8 @@ export const TaskCard = ({
       </TouchableOpacity>
 
       {isRight && <WeekCircle />}
+
+      {showConnector && <DottedConnector isRight={isRight} />}
     </Animated.View>
   );
 };
@@ -276,8 +289,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 20,
-    width: '100%',
-    gap: 10
+    width: "100%",
+    gap: 10,
   },
   cardTouchable: {
     flex: 1,
@@ -338,7 +351,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "rgba(255,255,255,0.75)",
     lineHeight: 18,
-    fontWeight: 300
+    fontWeight: 300,
   },
   cardMeta: {
     flexDirection: "row",
@@ -457,5 +470,23 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#0303038c",
     letterSpacing: -0.5,
+  },
+  connector: {
+    position: "absolute",
+    left: 24, 
+    top: "75%",
+    alignItems: "center",
+    zIndex: -1,
+  },
+  connectorRight: {
+    left: undefined,
+    right: 24,
+  },
+  connectorDot: {
+    width: 5,
+    height: 4,
+    backgroundColor: "#0d66d367",
+    marginVertical: 1,
+    borderRadius: 1,
   },
 });

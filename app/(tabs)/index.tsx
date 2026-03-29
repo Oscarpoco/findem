@@ -375,13 +375,14 @@ export default function Home() {
         {learningTasks
           .filter((task) => task.progress < 100)
           .slice(0, 2)
-          .map((task, index) => (
+          .map((task, index, array) => (
             <TaskCard
               key={task.id}
               task={task}
               index={index}
               showMeta={false}
               cardStyle="index"
+              showConnector={index < array.length - 1}
               onPress={() =>
                 router.navigate(`/(tabs)/moduleDetails?id=${task.id}`)
               }
