@@ -1,11 +1,11 @@
 import { Text, View } from "@/components/Themed";
 import { learningTasks } from "@/src/data/learningTasks";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useFocusEffect } from "@react-navigation/native";
 import {
   Animated,
   Dimensions,

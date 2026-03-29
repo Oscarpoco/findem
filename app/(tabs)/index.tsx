@@ -3,11 +3,11 @@ import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import { useAuthStore } from "@/src/state/authStore";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef } from "react";
-import { useFocusEffect } from "@react-navigation/native";
 import {
   Animated,
   Dimensions,
