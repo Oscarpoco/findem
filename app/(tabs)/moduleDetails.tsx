@@ -1,5 +1,6 @@
 import { Text, View } from "@/components/Themed";
-import { learningTasks } from "@/src/data/learningTasks";
+import { getLearningTasks } from "@/src/data/learningTasks";
+import { useProgressStore } from "@/src/state/progressStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
@@ -206,7 +207,9 @@ export default function ModuleDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const moduleId = typeof params.id === "string" ? parseInt(params.id) : 1;
-  const task = learningTasks.find((t) => t.id === moduleId) || learningTasks[0];
+  const progress = useProgressStore((state) => state.progress);
+  const tasks = getLearningTasks(progress);
+  const task = tasks.find((t) => t.id === moduleId) || tasks[0];
 
   const [isCompleted, setIsCompleted] = useState(false);
 
@@ -291,10 +294,7 @@ export default function ModuleDetailScreen() {
       }),
     ]).start(() => {
       setIsCompleted(true);
-      const idx = learningTasks.findIndex((item) => item.id === task.id);
-      if (idx >= 0) {
-        learningTasks[idx].progress = 100;
-      }
+      useProgressStore.getState().setProgress(task.id, 100);
     });
   };
 
@@ -312,9 +312,9 @@ export default function ModuleDetailScreen() {
       />
       <FloatingOrb
         color={task.gradient[1]}
-        size={220}
-        top={400}
-        left={SCREEN_WIDTH - 100}
+        size={2020}
+        top={670}
+        left={SCREEN_WIDTH - 1000}
         delay={400}
       />
 
@@ -330,7 +330,7 @@ export default function ModuleDetailScreen() {
       >
         <BlurView intensity={10} tint="light" style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => router.navigate("/(tabs)/modules")}
             style={styles.headerBtn}
           >
             <BlurView intensity={80} tint="light" style={styles.headerBtnBlur}>
@@ -354,7 +354,7 @@ export default function ModuleDetailScreen() {
       <ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: isCompleted ? 100 : 0 }]}
       >
         {/* ── Hero card — same gradient card as home ── */}
         <Animated.View
@@ -553,19 +553,8 @@ export default function ModuleDetailScreen() {
                 end={{ x: 1, y: 0 }}
                 style={styles.ctaGradient}
               >
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={22}
-                  color="#fff"
-                  style={{ marginRight: 10 }}
-                />
+               
                 <Text style={styles.ctaText}>MARK AS COMPLETE</Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color="#fff"
-                  style={{ marginLeft: 8 }}
-                />
               </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
@@ -580,19 +569,7 @@ export default function ModuleDetailScreen() {
           <TouchableOpacity activeOpacity={0.85} style={styles.ctaTouchable}>
             <BlurView intensity={20} tint="dark" style={styles.ctaGradient}>
               {/* <View style={styles.ctaInner}> */}
-              <Ionicons
-                name="clipboard-outline"
-                size={22}
-                color="#1b1a1a"
-                style={{ marginRight: 10 }}
-              />
-              <Text style={styles.ctaText}>TAKE ASSESSMENT</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color="#1b1a1a"
-                style={{ marginLeft: 8 }}
-              />
+              <Text style={[styles.ctaText, {color: '#02ad0b'}]}>TAKE ASSESSMENT</Text>
               {/* </View> */}
             </BlurView>
           </TouchableOpacity>
@@ -603,8 +580,7 @@ export default function ModuleDetailScreen() {
             end={{ x: 1, y: 0 }}
             style={styles.completedPillGradient}
           >
-            <BlurView intensity={20} tint="light" style={styles.completedPill}>
-              <Ionicons name="checkmark-done" size={15} color="#10B981" />
+            <BlurView intensity={50} tint="light" style={styles.completedPill}>
               <Text style={styles.completedText}>MODULE COMPLETED</Text>
             </BlurView>
           </LinearGradient>
@@ -856,9 +832,9 @@ const styles = StyleSheet.create({
   // ── Bottom CTA — same pattern as UnlockButton ──
   bottomBar: {
     position: "absolute",
-    bottom: 10,
-    left: 15,
-    right: 15,
+    bottom: 0,
+    left: 0,
+    right: 0,
     gap: 10,
   },
   completeButtonContainer: {
@@ -866,24 +842,25 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   ctaTouchable: {
-    borderRadius: 28,
+    borderRadius: 38,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 16,
     elevation: 10,
+    marginHorizontal: 15,
   },
   ctaGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 20,
+    paddingVertical: 18,
     paddingHorizontal: 24,
-    borderRadius: 28,
+    borderRadius: 38,
   },
   ctaText: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "500",
     color: "#1b1a1a",
     letterSpacing: -0.3,
@@ -896,13 +873,11 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
+    borderWidth: .5,
     borderColor: "rgba(16,185,129,0.2)",
-    overflow: "hidden",
+    overflow: "hidden",    
   },
   completedPillGradient: {
-    borderRadius: 20,
     overflow: "hidden",
   },
   completedText: { fontSize: 13, fontWeight: "400", color: "#10B981" },

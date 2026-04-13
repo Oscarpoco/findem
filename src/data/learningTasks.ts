@@ -21,7 +21,7 @@ export interface LearningTask {
   content: ModuleContent;
 }
 
-export const learningTasks: LearningTask[] = [
+const staticLearningTasks: Omit<LearningTask, "progress">[] = [
   {
     id: 1,
     week: "01",
@@ -29,7 +29,6 @@ export const learningTasks: LearningTask[] = [
     subtitle: "Responsive design fundamentals",
     dueDate: "APR 5",
     difficulty: "BEGINNER",
-    progress: 100,
     gradient: ["#0EA5E9", "#0284C7"] as [string, string],
     accentColor: "#38BDF8",
     lessons: 12,
@@ -87,7 +86,6 @@ Advanced CSS techniques include CSS variables (custom properties) for maintainab
     subtitle: "DOM & async programming",
     dueDate: "APR 12",
     difficulty: "BEGINNER",
-    progress: 30,
     gradient: ["#7C3AED", "#5B21B6"] as [string, string],
     accentColor: "#A78BFA",
     lessons: 15,
@@ -146,7 +144,6 @@ The Fetch API simplifies HTTP requests compared to older XMLHttpRequest. Combine
     subtitle: "Modern patterns & APIs",
     dueDate: "APR 19",
     difficulty: "INTERMEDIATE",
-    progress: 0,
     gradient: ["#059669", "#047857"] as [string, string],
     accentColor: "#34D399",
     lessons: 10,
@@ -205,7 +202,6 @@ Advanced concepts like Symbols create unique property keys, and WeakMap provides
     subtitle: "Cross-platform mobile dev",
     dueDate: "APR 26",
     difficulty: "INTERMEDIATE",
-    progress: 0,
     gradient: ["#DB2777", "#BE185D"] as [string, string],
     accentColor: "#F472B6",
     lessons: 20,
@@ -266,7 +262,6 @@ Deployment involves building signed APKs for Android and creating provisioned ap
     subtitle: "Node.js, Express & databases",
     dueDate: "MAY 3",
     difficulty: "ADVANCED",
-    progress: 0,
     gradient: ["#D97706", "#B45309"] as [string, string],
     accentColor: "#FCD34D",
     lessons: 18,
@@ -329,7 +324,6 @@ Scaling requires horizontally distributing load across servers, caching frequent
     subtitle: "Static typing & advanced types",
     dueDate: "MAY 10",
     difficulty: "INTERMEDIATE",
-    progress: 0,
     gradient: ["#0891B2", "#0E7490"] as [string, string],
     accentColor: "#22D3EE",
     lessons: 13,
@@ -390,7 +384,6 @@ Declaration files (.d.ts) enable TypeScript support for untyped JavaScript libra
     subtitle: "SQL, NoSQL & data modelling",
     dueDate: "MAY 17",
     difficulty: "ADVANCED",
-    progress: 0,
     gradient: ["#EA580C", "#C2410C"] as [string, string],
     accentColor: "#FB923C",
     lessons: 16,
@@ -453,7 +446,6 @@ Backup and recovery strategies prevent data loss. Transactions, replication, and
     subtitle: "Docker, pipelines & deployment",
     dueDate: "MAY 24",
     difficulty: "ADVANCED",
-    progress: 0,
     gradient: ["#4F46E5", "#4338CA"] as [string, string],
     accentColor: "#818CF8",
     lessons: 17,
@@ -512,3 +504,14 @@ Load balancing distributes traffic across multiple instances, ensuring high avai
     },
   },
 ];
+
+export const getLearningTasks = (
+  progressMap: Record<number, number> = {},
+): LearningTask[] => {
+  return staticLearningTasks.map((task) => ({
+    ...task,
+    progress: progressMap[task.id] || 0,
+  }));
+};
+
+export const learningTasks = getLearningTasks();

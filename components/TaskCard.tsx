@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   },
   cardTouchable: {
     flex: 1,
-    borderRadius: 28,
+    borderRadius: 38,
     overflow: "hidden",
     shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 6 },
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     borderRadius: 38,
   },
   cardGradient: {
-    borderRadius: 28,
+    borderRadius: 38,
     padding: 20,
     paddingBottom: 18,
   },
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: "rgba(255,255,255,0.08)",
-    borderRadius: 28,
+    borderRadius: 38,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.2)",
   },

@@ -5,16 +5,15 @@ import { useAuthStore } from "@/src/state/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Dimensions,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  TouchableOpacity,
+    Animated,
+    Dimensions,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    TouchableOpacity,
 } from "react-native";
 
 export const screenOptions = {
@@ -23,7 +22,8 @@ export const screenOptions = {
 };
 
 import { TaskCard } from "@/components/TaskCard";
-import { learningTasks } from "@/src/data/learningTasks";
+import { getLearningTasks, LearningTask } from "@/src/data/learningTasks";
+import { useProgressStore } from "@/src/state/progressStore";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -150,105 +150,30 @@ const FloatingOrb = ({
   );
 };
 
-// ─── Unlock Button ────────────────────────────────────────────────────────────
-const UnlockButton = () => {
-  const allComplete = learningTasks.every((t) => t.progress === 100);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (!allComplete) return;
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.03,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    pulse.start();
-    return () => pulse.stop();
-  }, []);
-
-  const onPressIn = () => {
-    if (!allComplete) return;
-    Animated.spring(scaleAnim, {
-      toValue: 0.95,
-      useNativeDriver: true,
-      tension: 100,
-      friction: 5,
-    }).start();
-  };
-  const onPressOut = () => {
-    if (!allComplete) return;
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      tension: 80,
-      friction: 6,
-    }).start();
-  };
-
-  return (
-    <Animated.View
-      style={[styles.unlockWrap, { transform: [{ scale: scaleAnim }] }]}
-    >
-      <TouchableOpacity
-        activeOpacity={allComplete ? 0.85 : 1}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        disabled={!allComplete}
-        style={styles.unlockTouchable}
-      >
-        <LinearGradient
-          colors={allComplete ? ["#EF4444", "#B91C1C"] : ["#CBD5E1", "#94A3B8"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.unlockGradient}
-        >
-          <View style={styles.unlockInner}>
-            <Ionicons
-              name={allComplete ? "rocket-outline" : "lock-closed-outline"}
-              size={22}
-              color={allComplete ? "#fff" : "rgba(255,255,255,0.7)"}
-              style={{ marginRight: 10 }}
-            />
-            <Text style={[styles.unlockText, !allComplete && { opacity: 0.7 }]}>
-              {allComplete
-                ? "Unlock Opportunities"
-                : "Complete All Modules to Unlock"}
-            </Text>
-            {allComplete && (
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color="#fff"
-                style={{ marginLeft: 8 }}
-              />
-            )}
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-};
-
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function Home() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const logout = useAuthStore((s) => s.logout);
+  const progress = useProgressStore((state) => state.progress);
+  const [tasks, setTasks] = useState<LearningTask[]>([]);
+
+  // Initialize tasks after store is hydrated
+  useEffect(() => {
+    setTasks(getLearningTasks(progress));
+  }, [progress]);
 
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerTranslateY = useRef(new Animated.Value(-30)).current;
   const heroOpacity = useRef(new Animated.Value(0)).current;
   const heroTranslateY = useRef(new Animated.Value(30)).current;
+
+  useFocusEffect(
+    useCallback(() => {
+      setTasks(getLearningTasks(progress));
+    }, [progress]),
+  );
 
   useEffect(() => {
     Animated.parallel([
@@ -372,7 +297,7 @@ export default function Home() {
         </Animated.View>
 
         {/* Cards */}
-        {learningTasks
+        {tasks
           .filter((task) => task.progress < 100)
           .slice(0, 2)
           .map((task, index, array) => (
@@ -545,33 +470,4 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   seeAllText: { fontSize: 13, fontWeight: "300", color: "#0EA5E9" },
-
-  // ── Unlock Button ──
-  unlockWrap: {
-    position: "absolute",
-    bottom: -50,
-    left: 0,
-    right: 0,
-    borderRadius: 28,
-    shadowColor: "#EF4444",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
-    shadowRadius: 20,
-    elevation: 14,
-  },
-  unlockTouchable: { borderRadius: 28, overflow: "hidden" },
-  unlockGradient: { borderRadius: 28 },
-  unlockInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-  },
-  unlockText: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#fff",
-    letterSpacing: -0.3,
-  },
 });

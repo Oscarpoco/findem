@@ -1,21 +1,23 @@
 import { Text, View } from "@/components/Themed";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
+  Animated,
+  Dimensions,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
 } from "react-native";
 
 import { TaskCard } from "@/components/TaskCard";
-import { learningTasks } from "@/src/data/learningTasks";
+import { getLearningTasks, LearningTask } from "@/src/data/learningTasks";
+import { useProgressStore } from "@/src/state/progressStore";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CIRCLE_SIZE = 52;
@@ -96,11 +98,24 @@ export default function ModulesScreen() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
+  const progress = useProgressStore((state) => state.progress);
+  const [tasks, setTasks] = useState<LearningTask[]>([]);
+
+  // Initialize tasks after store is hydrated
+  useEffect(() => {
+    setTasks(getLearningTasks(progress));
+  }, [progress]);
 
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerTranslateY = useRef(new Animated.Value(-20)).current;
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const contentTranslateY = useRef(new Animated.Value(20)).current;
+
+  useFocusEffect(
+    useCallback(() => {
+      setTasks(getLearningTasks(progress));
+    }, [progress]),
+  );
 
   useEffect(() => {
     Animated.parallel([
@@ -134,7 +149,7 @@ export default function ModulesScreen() {
     ]).start();
   }, []);
 
-  const filtered = learningTasks.filter((t) => {
+  const filtered = tasks.filter((t) => {
     const matchSearch =
       t.title.toLowerCase().includes(search.toLowerCase()) ||
       t.subtitle.toLowerCase().includes(search.toLowerCase());
@@ -142,8 +157,8 @@ export default function ModulesScreen() {
     return matchSearch && matchFilter;
   });
 
-  const completed = learningTasks.filter((t) => t.progress === 100).length;
-  const inProgress = learningTasks.filter(
+  const completed = tasks.filter((t) => t.progress === 100).length;
+  const inProgress = tasks.filter(
     (t) => t.progress > 0 && t.progress < 100,
   ).length;
 
@@ -181,9 +196,7 @@ export default function ModulesScreen() {
 
           <View style={styles.topCenter}>
             <Text style={styles.topTitle}>Learning Path</Text>
-            <Text style={styles.topSub}>
-              {learningTasks.length} modules · 10 weeks
-            </Text>
+            <Text style={styles.topSub}>{tasks.length} modules · 10 weeks</Text>
           </View>
 
           <TouchableOpacity style={styles.notifBtn}>
@@ -280,11 +293,11 @@ export default function ModulesScreen() {
           ]}
         >
           {[
-            { value: `${learningTasks.length}`, label: "TOTAL" },
+            { value: `${tasks.length}`, label: "TOTAL" },
             { value: `${completed}`, label: "DONE" },
             { value: `${inProgress}`, label: "ACTIVE" },
             {
-              value: `${learningTasks.length - completed - inProgress}`,
+              value: `${tasks.length - completed - inProgress}`,
               label: "LOCKED",
             },
           ].map((s, i) => (
@@ -337,9 +350,18 @@ export default function ModulesScreen() {
             />
           ))
         )}
-
-        {/* <View style={{ height: 60 }} /> */}
       </ScrollView>
+      <Animated.View style={[styles.bottomBar]}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.ctaTouchable}>
+          <BlurView intensity={20} tint="dark" style={styles.ctaGradient}>
+            {/* <View style={styles.ctaInner}> */}
+           
+            <Text style={styles.ctaText}>TAKE ASSESSMENT</Text>
+          
+            {/* </View> */}
+          </BlurView>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
@@ -412,7 +434,7 @@ const styles = StyleSheet.create({
 
   // ── Scroll ──
   scroll: { flex: 1, paddingTop: 140 },
-  scrollContent: { paddingHorizontal: 15 },
+  scrollContent: { paddingHorizontal: 15, paddingBottom: 70 },
 
   heroHeading: {
     fontSize: 38,
@@ -528,4 +550,39 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   emptySub: { fontSize: 13, fontWeight: "200", color: "#CBD5E1" },
+
+  bottomBar: {
+    position: "absolute",
+    bottom: 10,
+    left: 15,
+    right: 15,
+    gap: 10,
+  },
+  completeButtonContainer: {
+    marginTop: 0,
+    marginBottom: 20,
+  },
+  ctaTouchable: {
+    borderRadius: 38,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  ctaGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 38,
+  },
+  ctaText: {
+    fontSize: 20,
+    fontWeight: "500",
+    color: "#02ad0b",
+    letterSpacing: -0.3,
+  },
 });
