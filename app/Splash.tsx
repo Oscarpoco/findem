@@ -22,26 +22,26 @@ export const screenOptions = {
   headerShown: false,
 };
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 const EXPO_PUBLIC_API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function SplashScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const TINT = Colors.light.tint;
   const [isLoading, setIsLoading] = useState(false);
 
-  const BG = isDark ? "#080810" : "#f7f7fb";
-  const FG = isDark ? "#ffffff" : "#0a0a14";
+  // Professional medical/healthcare palette
+  const BG = isDark ? "#0f1419" : "#fafbfc";
+  const FG = isDark ? "#e8eaed" : "#0d1117";
+  const ACCENT = isDark ? "#3b82f6" : "#0066cc";
+  const MUTED = isDark ? "#4a5568" : "#6b7280";
 
   /* ─── ANIM VALUES ─── */
-  const lineScale = useRef(new Animated.Value(0)).current;
-  const topFade   = useRef(new Animated.Value(0)).current;
-  const topY      = useRef(new Animated.Value(-20)).current;
-  const nameFade  = useRef(new Animated.Value(0)).current;
-  const nameScale = useRef(new Animated.Value(0.88)).current;
-  const subFade   = useRef(new Animated.Value(0)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.94)).current;
+  const taglineOpacity = useRef(new Animated.Value(0)).current;
+  const footerOpacity = useRef(new Animated.Value(0)).current;
 
   /* ─── HELPERS ─── */
   const wakeUpServer = async (): Promise<boolean> => {
@@ -56,7 +56,7 @@ export default function SplashScreen() {
     } catch (error) {
       if (__DEV__) console.error("Error waking up server:", error);
       return false;
-    } finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -79,47 +79,35 @@ export default function SplashScreen() {
     };
 
     const animation = Animated.sequence([
+      Animated.delay(150),
+      // Logo appears with refined easing
+      Animated.parallel([
+        Animated.timing(logoOpacity, {
+          toValue: 1,
+          duration: 700,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoScale, {
+          toValue: 1,
+          duration: 700,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          useNativeDriver: true,
+        }),
+      ]),
       Animated.delay(200),
-      /* accent line sweeps in */
-      Animated.timing(lineScale, {
+      // Tagline fades in
+      Animated.timing(taglineOpacity, {
         toValue: 1,
-        duration: 420,
-        easing: Easing.out(Easing.exp),
+        duration: 600,
+        easing: Easing.out(Easing.quad),
         useNativeDriver: true,
       }),
-      /* top tag drops in */
-      Animated.parallel([
-        Animated.timing(topFade, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(topY, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]),
-      /* main name scales up */
-      Animated.parallel([
-        Animated.timing(nameFade, {
-          toValue: 1,
-          duration: 400,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.spring(nameScale, {
-          toValue: 1,
-          friction: 7,
-          tension: 120,
-          useNativeDriver: true,
-        }),
-      ]),
-      /* tagline + bottom text fade to their intended dim opacities */
-      Animated.timing(subFade, {
+      Animated.delay(150),
+      // Footer appears
+      Animated.timing(footerOpacity, {
         toValue: 1,
-        duration: 360,
+        duration: 500,
         easing: Easing.out(Easing.quad),
         useNativeDriver: true,
       }),
@@ -167,78 +155,51 @@ export default function SplashScreen() {
     <View style={[styles.root, { backgroundColor: BG }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
-      {/* ─── BACKGROUND DECORATIONS ─── */}
-      <View style={[styles.bgRingOuter, { borderColor: TINT + "18" }]} />
-      <View style={[styles.bgBlobBL,   { backgroundColor: TINT + "0e" }]} />
-
-      {/* ─── CENTER CONTENT ─── */}
-      <View style={styles.center}>
-        {/* north@health tag */}
-        <Animated.View
-          style={{ opacity: topFade, transform: [{ translateY: topY }] }}
-        >
-          <View style={[styles.topTag, { borderColor: TINT + "55" }]}>
-            <View style={[styles.tagDot, { backgroundColor: TINT }]} />
-            <Text style={[styles.tagText, { color: TINT }]}>
-              north @ health
-            </Text>
-          </View>
-        </Animated.View>
-
-        {/* accent rule */}
+      {/* Main content container */}
+      <View style={styles.container}>
+        {/* Logo section */}
         <Animated.View
           style={[
-            styles.accentLine,
-            { backgroundColor: TINT, transform: [{ scaleX: lineScale }] },
-          ]}
-        />
-
-        {/* main wordmark */}
-        <Animated.Text
-          style={[
-            styles.mainWord,
-            { color: FG, opacity: nameFade, transform: [{ scale: nameScale }] },
-          ]}
-        >
-          Findem
-        </Animated.Text>
-
-        {/* tagline — opacity driven entirely by subFade (toValue: 0.4) */}
-        <Animated.Text
-          style={[
-            styles.subWord,
+            styles.logoSection,
             {
-              color: FG,
-              opacity: subFade.interpolate({
-                inputRange:  [0, 1],
-                outputRange: [0, 0.4],
-              }),
+              opacity: logoOpacity,
+              transform: [{ scale: logoScale }],
             },
           ]}
         >
-          Find. Connect. Care.
-        </Animated.Text>
+          {/* Wordmark */}
+          <Text style={[styles.wordmark, { color: FG }]}>Findem</Text>
+          
+          {/* Separator line */}
+          <View style={[styles.separator, { backgroundColor: ACCENT }]} />
+          
+          {/* Tagline */}
+          <Animated.View style={{ opacity: taglineOpacity }}>
+            <Text style={[styles.tagline, { color: MUTED }]}>
+              Find. Connect. Care.
+            </Text>
+          </Animated.View>
+        </Animated.View>
+
+        {/* Loading indicator positioned below logo */}
+        {isLoading && (
+          <View style={styles.loaderWrapper}>
+            <ActivityIndicator size="small" color={ACCENT} />
+          </View>
+        )}
       </View>
 
-      <View style={{ position: 'absolute', bottom: 150, left: 0, right: 0, alignItems: 'center', justifyContent: 'center' }}>
-        {isLoading && <ActivityIndicator size={'large'} color={TINT}/>}
-      </View>
-
-      {/* ─── BOTTOM WORDMARK — opacity driven by subFade (toValue: 0.22) ─── */}
-      <Animated.Text
+      {/* Footer */}
+      <Animated.View
         style={[
-          styles.bottomText,
-          {
-            color: FG,
-            opacity: subFade.interpolate({
-              inputRange:  [0, 1],
-              outputRange: [0, 0.22],
-            }),
-          },
+          styles.footer,
+          { opacity: footerOpacity },
         ]}
       >
-        Powered by Gemini.ai
-      </Animated.Text>
+        <Text style={[styles.footerText, { color: MUTED }]}>
+          Powered by Gemini.ai
+        </Text>
+      </Animated.View>
     </View>
   );
 }
@@ -246,88 +207,56 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+
+  container: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 48,
   },
 
-  /* ─── BG ─── */
-  bgRingOuter: {
-    position: "absolute",
-    width: width * 1.1,
-    height: width * 1.1,
-    borderRadius: width * 0.55,
-    borderWidth: 1,
-    top: -width * 0.3,
-    right: -width * 0.3,
-  },
-  bgBlobBL: {
-    position: "absolute",
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    bottom: -70,
-    left: -70,
-  },
-
-  /* ─── CENTER ─── */
-  center: {
-    alignItems: "flex-start",
-    paddingHorizontal: 36,
-    width: "100%",
-  },
-
-  topTag: {
-    flexDirection: "row",
+  logoSection: {
     alignItems: "center",
-    gap: 7,
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    marginBottom: 22,
-    alignSelf: "flex-start",
-  },
-  tagDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  tagText: {
-    fontFamily: "GeomMedium",
-    fontSize: 11,
-    letterSpacing: 1.6,
-    textTransform: "uppercase",
   },
 
-  accentLine: {
-    width: 52,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 16,
-  },
-
-  mainWord: {
+  wordmark: {
     fontFamily: "GeomBlack",
-    fontSize: 76,
-    letterSpacing: -4,
-    lineHeight: 78,
-    marginBottom: 16,
+    fontSize: 64,
+    letterSpacing: -3,
+    marginBottom: 20,
   },
 
-  subWord: {
-    fontFamily: "GeomLight",
-    fontSize: 15,
-    letterSpacing: 0.4,
-
+  separator: {
+    width: 48,
+    height: 3,
+    borderRadius: 1.5,
+    marginBottom: 20,
   },
 
-  /* ─── BOTTOM ─── */
-  bottomText: {
+  tagline: {
+    fontFamily: "GeomRegular",
+    fontSize: 17,
+    letterSpacing: 0.2,
+    textAlign: "center",
+  },
+
+  loaderWrapper: {
+    marginTop: 56,
+  },
+
+  footer: {
     position: "absolute",
     bottom: 48,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+
+  footerText: {
     fontFamily: "GeomRegular",
     fontSize: 11,
-    letterSpacing: 2,
+    letterSpacing: 1,
     textTransform: "uppercase",
   },
 });
