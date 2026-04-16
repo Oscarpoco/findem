@@ -1,5 +1,4 @@
 import { useColorScheme } from "@/components/useColorScheme";
-import Colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {

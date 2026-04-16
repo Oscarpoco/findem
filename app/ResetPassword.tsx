@@ -56,30 +56,7 @@ export default function ResetPassword() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* ─── HEADER ─── */}
-        <View style={styles.headers}>
-          {/* LEFT PILL WITH ONLINE AVATAR */}
-          <View style={[styles.leftHeader, { backgroundColor: TINT }]}>
-            <Image source={{ uri: AVATAR_URL }} style={styles.avatar} />
-            <View style={[styles.appNameWrapper, { backgroundColor: TINT }]}>
-              <Text style={styles.appNameMain}>Findem</Text>
-            </View>
-          </View>
-          <View style={[styles.headerDivider, { backgroundColor: TINT }]} />
-          {/* BACK BUTTON */}
-          <TouchableOpacity
-            style={[styles.backBtn, { backgroundColor: TINT }]}
-            onPress={() => router.back()}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="arrow-back-outline"
-              size={20}
-              color={colors.background}
-            />
-          </TouchableOpacity>
-        </View>
-        {/* ─── HEADER END ─── */}
+      
 
         {/* ─── WELCOME BLOCK ─── */}
         <View style={styles.welcomeBlock}>
@@ -169,75 +146,6 @@ const styles = StyleSheet.create({
     paddingTop: 80,
     paddingHorizontal: 20,
     paddingBottom: 48,
-  },
-
-  /* ─── HEADER ─── */
-  headers: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 48,
-    position: "relative",
-  },
-  headerDivider: {
-    position: "absolute",
-    width: "95%",
-    height: 22,
-    backgroundColor: "red",
-    left: 5,
-    zIndex: 1,
-  },
-  leftHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    width: "85%",
-    borderRadius: 50,
-    paddingVertical: 6,
-    paddingHorizontal: 6,
-    height: 60,
-    zIndex: 2,
-  },
-  avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 25,
-    backgroundColor: "#fff",
-  },
-  appNameWrapper: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 1,
-    flexShrink: 1,
-    width: "100%",
-  },
-  appNameMain: {
-    fontFamily: "GeomExtraBold",
-    fontSize: 30,
-    color: "#000",
-    letterSpacing: -0.3,
-  },
-  appNameAt: {
-    fontFamily: "GeomLight",
-    fontSize: 16,
-    color: "rgba(255,255,255,0.7)",
-    textTransform: "uppercase",
-  },
-  appNameSub: {
-    fontFamily: "GeomMedium",
-    fontSize: 17,
-    color: "rgba(255,255,255,0.88)",
-    letterSpacing: -0.2,
-    textTransform: "uppercase",
-  },
-  backBtn: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 2,
   },
 
   /* ─── WELCOME ─── */

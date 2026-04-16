@@ -111,29 +111,7 @@ export default function Login() {
         showsVerticalScrollIndicator={false}
       >
 
-        {/* ─── HEADER ─── */}
-        <View style={styles.headers}>
-
-          {/* LEFT PILL WITH ONLINE AVATAR */}
-          <View style={[styles.headerDivider, { backgroundColor: TINT }]} />
-          <View style={[styles.leftHeader, { backgroundColor: TINT }]}>
-            <Image source={{ uri: AVATAR_URL }} style={styles.avatar} />
-            <View style={[styles.appNameWrapper, { backgroundColor: TINT }]}>
-              <Text style={styles.appNameMain}>Findem</Text>
-            </View>
-          </View>
-
-          {/* REGISTER ICON BUTTON */}
-          <TouchableOpacity
-            style={[styles.registerBtn, { backgroundColor: TINT }]}
-            onPress={() => router.replace("/Register")}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="person-add-outline" size={20} color={colors.background} />
-          </TouchableOpacity>
-
-        </View>
-        {/* ─── HEADER END ─── */}
+       
 
 
         {/* ─── WELCOME BLOCK ─── */}

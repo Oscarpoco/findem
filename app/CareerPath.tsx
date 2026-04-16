@@ -7,7 +7,8 @@ import { toastError, toastSuccess, toastInfo } from "@/src/ui/toast";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -20,34 +21,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 
-
 export const screenOptions = {
   title: "Career Path",
   headerShown: false,
 };
-
-const TECH_CAREERS = [
-  "Software Developer",
-  "Mobile App Developer",
-  "Web Developer",
-  "Frontend Engineer",
-  "Backend Engineer",
-  "Full Stack Engineer",
-  "UI/UX Designer",
-  "Product Designer",
-  "Data Analyst",
-  "Data Scientist",
-  "Machine Learning Engineer",
-  "DevOps Engineer",
-  "Cloud Engineer",
-  "Cybersecurity Analyst",
-  "QA Engineer",
-  "Product Manager",
-  "Scrum Master",
-  "IT Support Specialist",
-  "Network Engineer",
-  "Database Administrator",
-];
 
 export default function CareerPath() {
   const router = useRouter();
@@ -64,6 +41,9 @@ export default function CareerPath() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selected, setSelected] = useState<string>("");
   const [custom, setCustom] = useState("");
+  const [techCategory, setTechCategory] = useState<
+    { id: string; name: string; description: string }[]
+  >([]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -80,12 +60,33 @@ export default function CareerPath() {
     }
   }, [accessToken, careerCompleted, profileCompleted, router]);
 
+
+  // FETCH CAREER CATEGORIES
+  const fetchCategories = async () => {
+  try {
+
+    const API_URL = process.env.EXPO_PUBLIC_API_URL;
+    const  response  = await axios.get(
+      `${API_URL}/api/career/categories`
+    );
+
+    setTechCategory(response.data.data);
+  } catch (error ) {
+    toastError("Failed to fetch categories", error as any);
+  }
+};
+
+useEffect(() => {
+  fetchCategories();
+}, []);
+
+// ENDS
+
   const finalPath = useMemo(() => {
     const c = custom.trim();
     if (c.length > 0) return c;
     return selected.trim();
   }, [custom, selected]);
-
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -231,43 +232,47 @@ export default function CareerPath() {
         transparent
         onRequestClose={() => setPickerOpen(false)}
       >
-        <Pressable style={styles.modalBackdrop} onPress={() => setPickerOpen(false)} />
-        <View style={[styles.modalSheet, { backgroundColor: colors.background }]}>
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setPickerOpen(false)}
+        />
+        <View
+          style={[styles.modalSheet, { backgroundColor: colors.background }]}
+        >
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
+            <Text style={[styles.modalTitle, { color: colors.tint }]}>
               Tech careers
             </Text>
-            <TouchableOpacity onPress={() => setPickerOpen(false)}>
-              <Ionicons name="close" size={22} color={colors.text} />
-            </TouchableOpacity>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
-            {TECH_CAREERS.map((item) => (
+            {techCategory.map((item) => (
               <TouchableOpacity
-                key={item}
+                key={item.id}
                 style={[
                   styles.modalItem,
                   {
                     borderColor: colors.border,
                     backgroundColor:
-                      selected === item
-                        ? (scheme === "dark" ? "#1e1e1e" : "#f2f2f2")
+                      selected === item.id
+                        ? scheme === "dark"
+                          ? "#1e1e1e"
+                          : "#f2f2f2"
                         : "transparent",
                   },
                 ]}
                 onPress={() => {
-                  setSelected(item);
+                  setSelected(item.name);
                   setCustom("");
                   setPickerOpen(false);
                 }}
                 activeOpacity={0.75}
               >
                 <Text style={[styles.modalItemText, { color: colors.text }]}>
-                  {item}
+                  {item.name}
                 </Text>
-                {selected === item && (
-                  <Ionicons name="checkmark" size={18} color={TINT} />
+                {selected === item.name && (
+                  <Ionicons name="checkmark-done" size={22} color={TINT} />
                 )}
               </TouchableOpacity>
             ))}
@@ -380,35 +385,35 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     maxHeight: "70%",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+    borderTopLeftRadius: 38,
+    borderTopRightRadius: 38,
     paddingHorizontal: 18,
     paddingTop: 14,
     paddingBottom: 20,
   },
   modalHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 20,
+    paddingVertical: 8,
   },
   modalTitle: {
     fontFamily: "GeomBold",
-    fontSize: 18,
+    fontSize: 26,
   },
   modalItem: {
     paddingVertical: 14,
     paddingHorizontal: 14,
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 24,
+    borderWidth: .5,
     marginBottom: 10,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
   },
   modalItemText: {
     fontFamily: "GeomMedium",
     fontSize: 15,
   },
 });
-

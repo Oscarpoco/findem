@@ -1,4 +1,4 @@
-const yellow = '#FFC107';
+const yellow = '#03d8fd';
 
 const Colors = {
   light: {

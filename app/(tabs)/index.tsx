@@ -230,7 +230,7 @@ export default function Home() {
         ]}
       >
         <BlurView intensity={10} tint="light" style={styles.header}>
-          <TouchableOpacity style={styles.avatarBtn}>
+          <TouchableOpacity style={styles.avatarBtn} onPress={logout}>
             <BlurView intensity={80} tint="light" style={styles.avatarBlur}>
               <Ionicons name="person-outline" size={24} color="#0F172A" />
             </BlurView>
