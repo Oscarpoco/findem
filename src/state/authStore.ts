@@ -1,11 +1,13 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { queryClient } from "../lib/queryClient";
+import { authPersistStorage } from "./authPersistStorage";
 import { STORAGE_KEYS } from "./keys";
-import { zustandStorage } from "./zustandStorage";
 
 export type AuthState = {
   isAuthenticated: boolean;
   accessToken: string | null;
+  refreshToken: string | null;
   user: { id: string; email?: string | null } | null;
   profileCompleted: boolean;
   careerCompleted: boolean;
@@ -15,7 +17,11 @@ export type AuthState = {
   careerPathLabel: string | null;
 
   hydrate: () => Promise<void>;
-  login: (params: { accessToken?: string | null; user?: AuthState["user"] }) => Promise<void>;
+  login: (params: {
+    accessToken?: string | null;
+    refreshToken?: string | null;
+    user?: AuthState["user"];
+  }) => Promise<void>;
   /** Load career from API (path + categoryId) into local state; no-op on network error. */
   syncCareerFromApi: () => Promise<void>;
   setProfileCompleted: (completed: boolean) => void;
@@ -30,6 +36,7 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       isAuthenticated: false,
       accessToken: null,
+      refreshToken: null,
       user: null,
       profileCompleted: true,
       careerCompleted: true,
@@ -40,10 +47,15 @@ export const useAuthStore = create<AuthState>()(
         get();
       },
 
-      login: async ({ accessToken = null, user = null }) => {
+      login: async ({
+        accessToken = null,
+        refreshToken = null,
+        user = null,
+      }) => {
         set({
           isAuthenticated: true,
           accessToken,
+          refreshToken,
           user,
         });
       },
@@ -83,9 +95,11 @@ export const useAuthStore = create<AuthState>()(
         }),
 
       logout: async () => {
+        queryClient.clear();
         set({
           isAuthenticated: false,
           accessToken: null,
+          refreshToken: null,
           user: null,
           profileCompleted: true,
           careerCompleted: true,
@@ -96,10 +110,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: STORAGE_KEYS.auth,
-      storage: createJSONStorage(() => zustandStorage),
+      storage: createJSONStorage(() => authPersistStorage),
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         user: state.user,
         profileCompleted: state.profileCompleted,
         careerCompleted: state.careerCompleted,
@@ -115,9 +130,10 @@ export const useAuthStore = create<AuthState>()(
           careerPathLabel: p.careerPathLabel ?? null,
         };
         const token = merged.accessToken?.trim();
+        const refresh = merged.refreshToken?.trim();
         const hasUser = Boolean(merged.user?.id);
-        if (token && hasUser) merged.isAuthenticated = true;
-        if (!token || !hasUser) merged.isAuthenticated = false;
+        if ((token || refresh) && hasUser) merged.isAuthenticated = true;
+        if ((!token && !refresh) || !hasUser) merged.isAuthenticated = false;
         return merged;
       },
     }

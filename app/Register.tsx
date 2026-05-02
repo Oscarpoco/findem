@@ -67,6 +67,7 @@ export default function Register() {
       }
       await login({
         accessToken: normalized.accessToken,
+        refreshToken: normalized.refreshToken,
         user: { id: normalized.uid, email: normalized.email ?? email },
       });
       useAuthStore.setState({

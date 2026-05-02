@@ -162,7 +162,12 @@ export default function Home() {
         ]}
       >
         <BlurView intensity={10} tint="light" style={styles.header}>
-          <TouchableOpacity style={styles.avatarBtn} onPress={logout}>
+          <TouchableOpacity
+            style={styles.avatarBtn}
+            onPress={logout}
+            accessibilityRole="button"
+            accessibilityLabel="Sign out"
+          >
             <BlurView intensity={80} tint="light" style={styles.avatarBlur}>
               <Ionicons name="person-outline" size={24} color="#0F172A" />
             </BlurView>
@@ -172,7 +177,11 @@ export default function Home() {
             <Text style={styles.headerLogo}>Findem</Text>
           </View>
 
-          <TouchableOpacity style={styles.notifBtn}>
+          <TouchableOpacity
+            style={styles.notifBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Notifications"
+          >
             <BlurView intensity={80} tint="light" style={styles.notifBlur}>
               <View style={styles.notifDot} />
               <Ionicons
@@ -228,19 +237,27 @@ export default function Home() {
             style={styles.sectionHeaderTextCol}
           >
             <Text style={styles.sectionTitle}>Learning Path</Text>
-            <Text style={styles.sectionSub}>
-              {!careerCategoryId
-                ? "Pick a track to load modules"
-                : loadingRemote
-                  ? "Loading…"
+            {careerCategoryId && loadingRemote ? (
+              <FindemLoader
+                variant="inline"
+                message="Fetching your path…"
+                style={{ marginTop: 4 }}
+              />
+            ) : (
+              <Text style={styles.sectionSub}>
+                {!careerCategoryId
+                  ? "Pick a track to load modules"
                   : tasks.length === 0
                     ? "No modules for your track yet"
                     : `${tasks.length} module${tasks.length !== 1 ? "s" : ""}`}
-            </Text>
+              </Text>
+            )}
           </View>
           <TouchableOpacity
             style={styles.seeAllBtn}
             onPress={() => router.navigate("/(tabs)/modules")}
+            accessibilityRole="button"
+            accessibilityLabel="See all learning modules"
           >
             <Text style={styles.seeAllText}>See All</Text>
             <Ionicons name="chevron-forward" size={14} color="#0EA5E9" />
@@ -287,13 +304,17 @@ export default function Home() {
             darkColor="transparent"
             style={styles.pathEmptyWrap}
           >
-            <Text style={styles.pathEmptyHint}>
-              {!careerCategoryId
-                ? "Finish career setup to see modules on your path."
-                : loadingRemote
-                  ? "Loading your modules…"
-                  : "No modules published for your track yet."}
-            </Text>
+            {!careerCategoryId ? (
+              <Text style={styles.pathEmptyHint}>
+                Finish career setup to see modules on your path.
+              </Text>
+            ) : loadingRemote ? (
+              <FindemLoader variant="card" message="Loading your modules…" />
+            ) : (
+              <Text style={styles.pathEmptyHint}>
+                No modules published for your track yet.
+              </Text>
+            )}
           </View>
         )}
 

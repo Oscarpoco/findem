@@ -1,11 +1,13 @@
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo } from "react";
+
 import { listLearningModulesByCategory } from "../api/learningModules";
+import { learningModulesQueryKeys } from "../api/learningModulesQuery";
 import {
   mapApiLearningModuleToTask,
   type LearningTask,
 } from "../data/learningTasks";
-import type { LearningModuleDto } from "../types/learningModule";
 import { useAuthStore } from "../state/authStore";
 import { useProgressStore } from "../state/progressStore";
 
@@ -16,44 +18,56 @@ export function useLearningModuleList(): {
 } {
   const careerCategoryId = useAuthStore((s) => s.careerCategoryId);
   const progress = useProgressStore((s) => s.progress);
-  const [remoteRows, setRemoteRows] = useState<LearningModuleDto[]>([]);
-  const [loadingRemote, setLoadingRemote] = useState(false);
+  const queryClient = useQueryClient();
 
-  const loadRemote = useCallback(async () => {
-    if (!careerCategoryId) {
-      setRemoteRows([]);
-      return;
-    }
-    setLoadingRemote(true);
-    try {
-      const rows = await listLearningModulesByCategory(careerCategoryId);
-      setRemoteRows(rows);
-    } catch {
-      setRemoteRows([]);
-    } finally {
-      setLoadingRemote(false);
-    }
-  }, [careerCategoryId]);
+  const categoryKey = careerCategoryId ?? "";
+
+  const query = useQuery({
+    queryKey: learningModulesQueryKeys.byCategory(categoryKey),
+    queryFn: async () => {
+      const cat = useAuthStore.getState().careerCategoryId;
+      if (!cat) return [];
+      return listLearningModulesByCategory(cat);
+    },
+    enabled: Boolean(careerCategoryId),
+  });
 
   useFocusEffect(
     useCallback(() => {
       void (async () => {
         await useAuthStore.getState().syncCareerFromApi();
-        await loadRemote();
+        const cat = useAuthStore.getState().careerCategoryId;
+        if (cat) {
+          await queryClient.invalidateQueries({
+            queryKey: learningModulesQueryKeys.byCategory(cat),
+          });
+        }
       })();
-    }, [loadRemote]),
+    }, [queryClient]),
   );
 
   const tasks = useMemo(() => {
     if (!careerCategoryId) return [];
-    return remoteRows.map((r) =>
+    const rows = query.data ?? [];
+    return rows.map((r) =>
       mapApiLearningModuleToTask(r, progress[r.id] ?? 0),
     );
-  }, [careerCategoryId, remoteRows, progress]);
+  }, [careerCategoryId, query.data, progress]);
+
+  const loadingRemote =
+    Boolean(careerCategoryId) && query.status === "pending";
+
+  const refresh = useCallback(async () => {
+    const cat = useAuthStore.getState().careerCategoryId;
+    if (!cat) return;
+    await queryClient.invalidateQueries({
+      queryKey: learningModulesQueryKeys.byCategory(cat),
+    });
+  }, [queryClient]);
 
   return {
     tasks,
-    loadingRemote: Boolean(careerCategoryId) && loadingRemote,
-    refresh: loadRemote,
+    loadingRemote,
+    refresh,
   };
 }

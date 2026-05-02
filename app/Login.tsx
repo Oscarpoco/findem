@@ -54,6 +54,7 @@ export default function Login() {
       }
       await login({
         accessToken: normalized.accessToken,
+        refreshToken: normalized.refreshToken,
         user: { id: normalized.uid, email: normalized.email ?? email },
       });
       await useAuthStore.getState().syncCareerFromApi();

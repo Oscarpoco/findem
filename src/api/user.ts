@@ -26,6 +26,7 @@ function extractErrorMessage(data: any): string | null {
 
 export type NormalizedAuth = {
   accessToken: string | null;
+  refreshToken: string | null;
   uid: string | null;
   email: string | null;
 };
@@ -35,6 +36,11 @@ export function normalizeAuthResponse(
   fallback: { email?: string | null } = {}
 ): NormalizedAuth {
   const data = raw?.data ?? raw;
+
+  const refreshToken: string | null =
+    data?.refreshToken ??
+    data?.data?.refreshToken ??
+    null;
 
   const accessToken: string | null =
     data?.accessToken ?? data?.token ?? data?.data?.accessToken ?? data?.data?.token ?? null;
@@ -53,7 +59,7 @@ export function normalizeAuthResponse(
   const email: string | null =
     user?.email ?? data?.email ?? data?.data?.email ?? fallback.email ?? null;
 
-  return { accessToken, uid, email };
+  return { accessToken, refreshToken, uid, email };
 }
 
 export type RegisterEmailRequest = {

@@ -186,6 +186,8 @@ export default function ModulesScreen() {
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
             <BlurView intensity={80} tint="light" style={styles.backBlur}>
               <Ionicons name="chevron-back" size={22} color="#0F172A" />
@@ -205,7 +207,11 @@ export default function ModulesScreen() {
             )}
           </View>
 
-          <TouchableOpacity style={styles.notifBtn}>
+          <TouchableOpacity
+            style={styles.notifBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Notifications"
+          >
             <BlurView intensity={80} tint="light" style={styles.notifBlur}>
               <View style={styles.notifDot} />
               <Ionicons

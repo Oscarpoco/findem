@@ -1,0 +1,8 @@
+# Smoke flow for Maestro (https://maestro.mobile.dev).
+# Install: brew install maestro  (or see docs). Update appId to match your bundle id / package name.
+# Run: maestro test maestro/smoke.yaml
+
+appId: com.yourcompany.findem
+---
+- launchApp
+- assertVisible: "Findem"

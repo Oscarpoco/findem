@@ -370,6 +370,8 @@ export default function ModuleDetailScreen() {
         <TouchableOpacity
           onPress={() => router.navigate("/(tabs)/modules")}
           style={styles.loaderBackBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Back to modules list"
         >
           <Text style={{ color: "#0EA5E9", fontWeight: "600" }}>Back to modules</Text>
         </TouchableOpacity>
@@ -411,6 +413,8 @@ export default function ModuleDetailScreen() {
           <TouchableOpacity
             onPress={() => router.navigate("/(tabs)/modules")}
             style={styles.headerBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Go back to modules"
           >
             <BlurView intensity={80} tint="light" style={styles.headerBtnBlur}>
               <Ionicons name="chevron-back" size={22} color="#0F172A" />
@@ -422,7 +426,11 @@ export default function ModuleDetailScreen() {
             <Text style={styles.headerSub}>Week {task.week}</Text>
           </View>
 
-          <TouchableOpacity style={styles.headerBtn}>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Bookmark module"
+          >
             <BlurView intensity={80} tint="light" style={styles.headerBtnBlur}>
               <Ionicons name="bookmark-outline" size={20} color="#0F172A" />
             </BlurView>

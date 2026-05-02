@@ -10,8 +10,10 @@ import { useEffect, useState } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/components/useColorScheme";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppQueryProvider } from "@/src/providers/QueryProvider";
+import { initSentry } from "@/src/lib/sentry";
 import { useAuthStore } from "@/src/state/authStore";
 import { useOnboardingStore } from "@/src/state/onboardingStore";
 import { AlertToast } from "@/src/ui/AlertToast";
@@ -47,6 +49,10 @@ export default function RootLayout() {
     GeomSemiBold: require("../assets/fonts/Geom-SemiBold.ttf"),
     GeomSemiBoldItalic: require("../assets/fonts/Geom-SemiBoldItalic.ttf"),
   });
+
+  useEffect(() => {
+    initSentry();
+  }, []);
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
@@ -88,21 +94,23 @@ function RootLayoutNav() {
   return (
     <SafeAreaProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <AppQueryProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="Splash" options={{ headerShown: false }} />
-            <Stack.Screen name="Onboarding" options={{ headerShown: false }} />
-            <Stack.Screen name="Login" options={{ headerShown: false }} />
-            <Stack.Screen name="Register" options={{ headerShown: false }} />
-            <Stack.Screen name="ProfileUpdate" options={{ headerShown: false }} />
-            <Stack.Screen name="CareerPath" options={{ headerShown: false }} />
-            <Stack.Screen name="ResetPassword" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-          </Stack>
-          <AlertToast />
-        </AppQueryProvider>
+        <AppErrorBoundary>
+          <AppQueryProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="Splash" options={{ headerShown: false }} />
+              <Stack.Screen name="Onboarding" options={{ headerShown: false }} />
+              <Stack.Screen name="Login" options={{ headerShown: false }} />
+              <Stack.Screen name="Register" options={{ headerShown: false }} />
+              <Stack.Screen name="ProfileUpdate" options={{ headerShown: false }} />
+              <Stack.Screen name="CareerPath" options={{ headerShown: false }} />
+              <Stack.Screen name="ResetPassword" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+            </Stack>
+            <AlertToast />
+          </AppQueryProvider>
+        </AppErrorBoundary>
       </ThemeProvider>
     </SafeAreaProvider>
   );

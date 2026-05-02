@@ -22,7 +22,7 @@ export const screenOptions = {
 };
 
 const { width, height } = Dimensions.get("window");
-const EXPO_PUBLIC_API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { EXPO_PUBLIC_API_URL } from "@/src/lib/env";
 
 export default function SplashScreen() {
   const router = useRouter();
