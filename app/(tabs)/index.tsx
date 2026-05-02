@@ -1,12 +1,11 @@
 import { Text, View } from "@/components/Themed";
-import { useColorScheme } from "@/components/useColorScheme";
-import Colors from "@/constants/Colors";
 import { useAuthStore } from "@/src/state/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import LottieView from "lottie-react-native";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
     Animated,
     Dimensions,
@@ -22,8 +21,8 @@ export const screenOptions = {
 };
 
 import { TaskCard } from "@/components/TaskCard";
-import { getLearningTasks, LearningTask } from "@/src/data/learningTasks";
-import { useProgressStore } from "@/src/state/progressStore";
+import { FindemLoader } from "@/components/FindemLoader";
+import { useLearningModuleList } from "@/src/hooks/useLearningModuleList";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -81,99 +80,39 @@ const StatPill = ({
   );
 };
 
-// ─── Floating Orb ─────────────────────────────────────────────────────────────
-const FloatingOrb = ({
-  color,
-  size,
-  top,
-  left,
-  delay,
-}: {
-  color: string;
-  size: number;
-  top: number;
-  left: number;
-  delay: number;
-}) => {
-  const floatAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 800,
-      delay,
-      useNativeDriver: true,
-    }).start();
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, {
-          toValue: 1,
-          duration: 3000 + delay * 0.5,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAnim, {
-          toValue: 0,
-          duration: 3000 + delay * 0.5,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, []);
-
-  return (
-    <Animated.View
-      style={{
-        position: "absolute",
-        top,
-        left,
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        backgroundColor: color,
-        opacity: fadeAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 0.12],
-        }),
-        transform: [
-          {
-            translateY: floatAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, -20],
-            }),
-          },
-        ],
-      }}
-    />
-  );
-};
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function Home() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? "light"];
   const logout = useAuthStore((s) => s.logout);
-  const progress = useProgressStore((state) => state.progress);
-  const [tasks, setTasks] = useState<LearningTask[]>([]);
+  const careerPathLabel = useAuthStore((s) => s.careerPathLabel);
+  const careerCategoryId = useAuthStore((s) => s.careerCategoryId);
+  const { tasks, loadingRemote } = useLearningModuleList();
 
-  // Initialize tasks after store is hydrated
-  useEffect(() => {
-    setTasks(getLearningTasks(progress));
-  }, [progress]);
+  const completed = tasks.filter((t) => t.progress === 100).length;
+  const inProgress = tasks.filter(
+    (t) => t.progress > 0 && t.progress < 100,
+  ).length;
+  const donePct =
+    tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
+
+  const heroTitle = (careerPathLabel || "Software Development")
+    .split(/\s+/)
+    .slice(0, 3)
+    .join("\n");
+
+  const incompleteForHome = useMemo(
+    () => tasks.filter((t) => t.progress < 100),
+    [tasks],
+  );
+  const homePreviewTasks = incompleteForHome.slice(0, 2);
+  const allModulesCompleted =
+    tasks.length > 0 && incompleteForHome.length === 0;
 
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerTranslateY = useRef(new Animated.Value(-30)).current;
   const heroOpacity = useRef(new Animated.Value(0)).current;
   const heroTranslateY = useRef(new Animated.Value(30)).current;
-
-  useFocusEffect(
-    useCallback(() => {
-      setTasks(getLearningTasks(progress));
-    }, [progress]),
-  );
 
   useEffect(() => {
     Animated.parallel([
@@ -211,14 +150,7 @@ export default function Home() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      <FloatingOrb
-        color="#0EA5E9"
-        size={600}
-        top={-180}
-        left={-100}
-        delay={0}
-      />
-
+    
       {/* Header */}
       <Animated.View
         style={[
@@ -269,23 +201,42 @@ export default function Home() {
             },
           ]}
         >
-          <Text style={styles.heroHeading}>Software{"\n"}Development</Text>
+          <Text style={styles.heroHeading}>{heroTitle}</Text>
           <Text style={styles.heroDesc}>
-            Master full-stack engineering from fundamentals to production
-            deployment.
+            Master your track from fundamentals to job-ready projects.
           </Text>
           <View style={styles.statsRow}>
-            <StatPill value="5" label="MODULES" delay={300} />
-            <StatPill value="2" label="ACTIVE" delay={420} />
-            <StatPill value="47%" label="DONE" delay={540} />
+            <StatPill
+              value={`${tasks.length}`}
+              label="MODULES"
+              delay={300}
+            />
+            <StatPill
+              value={`${inProgress}`}
+              label="ACTIVE"
+              delay={420}
+            />
+            <StatPill value={`${donePct}%`} label="DONE" delay={540} />
           </View>
         </Animated.View>
 
         {/* Section header */}
         <Animated.View style={[styles.sectionHeader, { opacity: heroOpacity }]}>
-          <View style={{ backgroundColor: "transparent" }}>
+          <View
+            lightColor="transparent"
+            darkColor="transparent"
+            style={styles.sectionHeaderTextCol}
+          >
             <Text style={styles.sectionTitle}>Learning Path</Text>
-            <Text style={styles.sectionSub}>5 modules · 10 weeks</Text>
+            <Text style={styles.sectionSub}>
+              {!careerCategoryId
+                ? "Pick a track to load modules"
+                : loadingRemote
+                  ? "Loading…"
+                  : tasks.length === 0
+                    ? "No modules for your track yet"
+                    : `${tasks.length} module${tasks.length !== 1 ? "s" : ""}`}
+            </Text>
           </View>
           <TouchableOpacity
             style={styles.seeAllBtn}
@@ -296,11 +247,26 @@ export default function Home() {
           </TouchableOpacity>
         </Animated.View>
 
-        {/* Cards */}
-        {tasks
-          .filter((task) => task.progress < 100)
-          .slice(0, 2)
-          .map((task, index, array) => (
+        {/* Learning path preview: up to 2 incomplete modules, or celebration when all done */}
+        {allModulesCompleted ? (
+          <View
+            lightColor="transparent"
+            darkColor="transparent"
+            style={styles.completedLottieBlock}
+          >
+            <LottieView
+              source={require("@/assets/animations/completed.json")}
+              autoPlay
+              loop={false}
+              style={styles.completedLottie}
+            />
+            <Text style={styles.completedTitle}>You're all caught up</Text>
+            <Text style={styles.completedSub}>
+              Every module on your path is complete. Review anytime from See All.
+            </Text>
+          </View>
+        ) : homePreviewTasks.length > 0 ? (
+          homePreviewTasks.map((task, index, array) => (
             <TaskCard
               key={task.id}
               task={task}
@@ -309,10 +275,27 @@ export default function Home() {
               cardStyle="index"
               showConnector={index < array.length - 1}
               onPress={() =>
-                router.navigate(`/(tabs)/moduleDetails?id=${task.id}`)
+                router.navigate(
+                  `/(tabs)/moduleDetails?id=${encodeURIComponent(task.id)}`,
+                )
               }
             />
-          ))}
+          ))
+        ) : (
+          <View
+            lightColor="transparent"
+            darkColor="transparent"
+            style={styles.pathEmptyWrap}
+          >
+            <Text style={styles.pathEmptyHint}>
+              {!careerCategoryId
+                ? "Finish career setup to see modules on your path."
+                : loadingRemote
+                  ? "Loading your modules…"
+                  : "No modules published for your track yet."}
+            </Text>
+          </View>
+        )}
 
         {/* <View style={{ height: 140 }} /> */}
       </ScrollView>
@@ -324,8 +307,6 @@ export default function Home() {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const CIRCLE_SIZE = 52;
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F0F4FF" },
 
@@ -452,6 +433,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: "transparent",
   },
+  sectionHeaderTextCol: {
+    backgroundColor: "transparent",
+    flexShrink: 1,
+  },
   sectionTitle: {
     fontSize: 22,
     fontWeight: "300",
@@ -470,4 +455,48 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   seeAllText: { fontSize: 13, fontWeight: "300", color: "#0EA5E9" },
+
+  completedLottieBlock: {
+    alignItems: "center",
+    marginBottom: 24,
+    backgroundColor: "transparent",
+  },
+  completedLottie: {
+    width: SCREEN_WIDTH * 0.62,
+    height: SCREEN_WIDTH * 0.62,
+    maxWidth: 280,
+    maxHeight: 280,
+    backgroundColor: "transparent",
+  },
+  completedTitle: {
+    fontSize: 20,
+    fontWeight: "500",
+    color: "#0F172A",
+    letterSpacing: -0.4,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  completedSub: {
+    fontSize: 14,
+    fontWeight: "300",
+    color: "#64748B",
+    textAlign: "center",
+    marginTop: 8,
+    paddingHorizontal: 12,
+    lineHeight: 20,
+    maxWidth: 320,
+  },
+  pathEmptyWrap: {
+    alignSelf: "stretch",
+    backgroundColor: "transparent",
+  },
+  pathEmptyHint: {
+    fontSize: 14,
+    fontWeight: "300",
+    color: "#94A3B8",
+    textAlign: "center",
+    paddingVertical: 28,
+    paddingHorizontal: 16,
+    lineHeight: 21,
+  },
 });

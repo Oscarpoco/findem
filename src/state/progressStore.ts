@@ -4,10 +4,10 @@ import { STORAGE_KEYS } from "./keys";
 import { zustandStorage } from "./zustandStorage";
 
 export type ProgressState = {
-  progress: Record<number, number>; // taskId -> progress (0-100)
+  progress: Record<string, number>;
 
-  setProgress: (taskId: number, progress: number) => void;
-  getProgress: (taskId: number) => number;
+  setProgress: (taskId: string, progress: number) => void;
+  getProgress: (taskId: string) => number;
   resetProgress: () => void;
 };
 
@@ -26,7 +26,7 @@ export const useProgressStore = create<ProgressState>()(
       },
 
       getProgress: (taskId) => {
-        return get().progress[taskId] || 0;
+        return get().progress[taskId] ?? 0;
       },
 
       resetProgress: () => {

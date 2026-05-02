@@ -2,13 +2,14 @@ import { Text, View } from "@/components/Themed";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import { createCareerPath } from "../src/api/career";
+import { api } from "../src/api/client";
 import { useAuthStore } from "@/src/state/authStore";
 import { toastError, toastSuccess, toastInfo } from "@/src/ui/toast";
+import { FindemButtonSpinner } from "@/components/FindemLoader";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { use, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import { useEffect, useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -34,11 +35,10 @@ export default function CareerPath() {
   const uid = useAuthStore((s) => s.user?.id);
 
   const accessToken = useAuthStore((s) => s.accessToken);
-  const profileCompleted = useAuthStore((s) => s.profileCompleted);
-  const careerCompleted = useAuthStore((s) => s.careerCompleted);
-  const setCareerCompleted = useAuthStore((s) => s.setCareerCompleted);
+  const setCareerAfterSetup = useAuthStore((s) => s.setCareerAfterSetup);
 
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selected, setSelected] = useState<string>("");
   const [custom, setCustom] = useState("");
   const [techCategory, setTechCategory] = useState<
@@ -46,35 +46,48 @@ export default function CareerPath() {
   >([]);
 
   useEffect(() => {
-    if (!accessToken) {
-      toastError("Session expired", "Please sign in again.");
-      router.replace("/Login");
-      return;
-    }
-    if (!profileCompleted) {
-      router.replace("/ProfileUpdate");
-      return;
-    }
-    if (careerCompleted) {
-      router.replace("/(tabs)");
-    }
-  }, [accessToken, careerCompleted, profileCompleted, router]);
+    let cancelled = false;
+
+    const run = async () => {
+      if (!accessToken) {
+        toastError("Session expired", "Please sign in again.");
+        router.replace("/Login");
+        return;
+      }
+      await useAuthStore.getState().syncCareerFromApi();
+      if (cancelled) return;
+
+      const { profileCompleted: profileDone, careerCompleted: careerDone } =
+        useAuthStore.getState();
+
+      if (!profileDone) {
+        router.replace("/ProfileUpdate");
+        return;
+      }
+      if (careerDone) {
+        router.replace("/(tabs)");
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, router]);
 
 
   // FETCH CAREER CATEGORIES
   const fetchCategories = async () => {
-  try {
-
-    const API_URL = process.env.EXPO_PUBLIC_API_URL;
-    const  response  = await axios.get(
-      `${API_URL}/api/career/categories`
-    );
-
-    setTechCategory(response.data.data);
-  } catch (error ) {
-    toastError("Failed to fetch categories", error as any);
-  }
-};
+    try {
+      const { data } = await api.get<{ data: typeof techCategory }>(
+        "/api/career/categories",
+      );
+      setTechCategory(Array.isArray(data.data) ? data.data : []);
+    } catch (error) {
+      toastError("Failed to fetch categories", String(error));
+    }
+  };
 
 useEffect(() => {
   fetchCategories();
@@ -91,10 +104,17 @@ useEffect(() => {
   const mutation = useMutation({
     mutationFn: async () => {
       if (!uid) throw new Error("No UID");
-      return createCareerPath({ uid, path: finalPath });
+      return createCareerPath({
+        uid,
+        path: finalPath,
+        ...(selectedCategoryId ? { categoryId: selectedCategoryId } : {}),
+      });
     },
     onSuccess: async () => {
-      setCareerCompleted(true);
+      setCareerAfterSetup({
+        categoryId: selectedCategoryId,
+        pathLabel: finalPath,
+      });
       toastSuccess("Career saved", "Welcome to Findem.");
       router.replace("/(tabs)");
     },
@@ -202,7 +222,13 @@ useEffect(() => {
                 placeholder="e.g. Blockchain Developer"
                 placeholderTextColor="#aaa"
                 value={custom}
-                onChangeText={setCustom}
+                onChangeText={(t) => {
+                  setCustom(t);
+                  if (t.trim().length > 0) {
+                    setSelectedCategoryId(null);
+                    setSelected("");
+                  }
+                }}
               />
             </View>
           </View>
@@ -216,9 +242,12 @@ useEffect(() => {
             activeOpacity={0.85}
             disabled={mutation.isPending}
           >
-            <Text style={styles.primaryBtnText}>
-              {mutation.isPending ? "Saving..." : "Finish Setup"}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              {mutation.isPending ? <FindemButtonSpinner color="#fff" /> : null}
+              <Text style={styles.primaryBtnText}>
+                {mutation.isPending ? "Saving..." : "Finish Setup"}
+              </Text>
+            </View>
             <View style={styles.primaryArrow}>
               <Ionicons name="chevron-forward" size={20} color={TINT} />
             </View>
@@ -254,7 +283,7 @@ useEffect(() => {
                   {
                     borderColor: colors.border,
                     backgroundColor:
-                      selected === item.id
+                      selected === item.name
                         ? scheme === "dark"
                           ? "#1e1e1e"
                           : "#f2f2f2"
@@ -262,6 +291,7 @@ useEffect(() => {
                   },
                 ]}
                 onPress={() => {
+                  setSelectedCategoryId(item.id);
                   setSelected(item.name);
                   setCustom("");
                   setPickerOpen(false);

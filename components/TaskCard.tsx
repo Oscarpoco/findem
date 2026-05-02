@@ -11,15 +11,16 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { pacingLabelFromDue } from "@/src/utils/duePacing";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface LearningTask {
-  id: number;
+  id: string;
   week: string;
   title: string;
   subtitle: string;
-  dueDate: string;
+  dueDate?: string;
   difficulty: string;
   progress: number;
   gradient: [string, string];
@@ -243,7 +244,7 @@ export const TaskCard = ({
 
             <View style={styles.cardRight}>
               <View style={styles.dateBadge}>
-                <Text style={styles.dateText}>{task.dueDate}</Text>
+                <Text style={styles.dateText}>{pacingLabelFromDue(task.dueDate)}</Text>
               </View>
               {isLocked && (
                 <View style={styles.lockIcon}>

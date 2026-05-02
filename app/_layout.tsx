@@ -6,12 +6,14 @@ import {
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/components/useColorScheme";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppQueryProvider } from "@/src/providers/QueryProvider";
+import { useAuthStore } from "@/src/state/authStore";
+import { useOnboardingStore } from "@/src/state/onboardingStore";
 import { AlertToast } from "@/src/ui/AlertToast";
 
 export {
@@ -28,6 +30,7 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [storesReady, setStoresReady] = useState(false);
   const [loaded, error] = useFonts({
     GeomBlack: require("../assets/fonts/Geom-Black.ttf"),
     GeomBlackItalic: require("../assets/fonts/Geom-BlackItalic.ttf"),
@@ -51,12 +54,28 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
+    if (!loaded) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await Promise.all([
+          useAuthStore.persist.rehydrate(),
+          useOnboardingStore.persist.rehydrate(),
+        ]);
+      } catch (e) {
+        if (__DEV__) console.warn("Persist rehydrate failed:", e);
+      }
+      if (!cancelled) {
+        setStoresReady(true);
+        SplashScreen.hideAsync();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [loaded]);
 
-  if (!loaded) {
+  if (!loaded || !storesReady) {
     return null;
   }
 

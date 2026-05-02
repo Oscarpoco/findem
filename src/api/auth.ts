@@ -1,14 +1,19 @@
 import { api } from "./client";
 
 export type LoginRequest = { email: string; password: string };
+
+/** Same contract as POST /api/user/login/email — prefer `user.ts` `loginWithEmail` in app code. */
 export type LoginResponse = {
-  accessToken: string;
-  user?: { id: string; email?: string | null };
+  token?: string;
+  accessToken?: string;
+  uid?: string;
+  user?: Record<string, unknown>;
+  message?: string;
 };
 
-export async function loginWithEmailPassword(body: LoginRequest): Promise<LoginResponse> {
-  // Adjust this endpoint to your backend.
-  const res = await api.post<LoginResponse>("/auth/login", body);
+export async function loginWithEmailPassword(
+  body: LoginRequest
+): Promise<LoginResponse> {
+  const res = await api.post<LoginResponse>("/api/user/login/email", body);
   return res.data;
 }
-

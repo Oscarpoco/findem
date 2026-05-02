@@ -4,6 +4,7 @@ import Colors from "@/constants/Colors";
 import { normalizeAuthResponse, registerWithEmail } from "../src/api/user";
 import { useAuthStore } from "@/src/state/authStore";
 import { toastError, toastSuccess } from "@/src/ui/toast";
+import { FindemButtonSpinner } from "@/components/FindemLoader";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -33,8 +34,6 @@ export default function Register() {
   const colors = Colors[colorScheme ?? "light"];
   const TINT = Colors.light.tint;
   const login = useAuthStore((s) => s.login);
-  const setProfileCompleted = useAuthStore((s) => s.setProfileCompleted);
-  const setCareerCompleted = useAuthStore((s) => s.setCareerCompleted);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,16 +52,11 @@ export default function Register() {
         trimmedEmail.split("@")[0]?.replace(/[._-]+/g, " ").trim() ||
         "Findem User";
 
-      // Backend requires exactly 13 digits at registration time.
-      // Real value is collected in ProfileUpdate.
-      const placeholderIdentityNumber = "0000000000000";
-
       return registerWithEmail({
         email: trimmedEmail,
         password,
         displayName:
           derivedDisplayName.length >= 2 ? derivedDisplayName : "Findem User",
-        identityNumber: placeholderIdentityNumber,
       });
     },
     onMutate: () => {},
@@ -75,8 +69,12 @@ export default function Register() {
         accessToken: normalized.accessToken,
         user: { id: normalized.uid, email: normalized.email ?? email },
       });
-      setProfileCompleted(false);
-      setCareerCompleted(false);
+      useAuthStore.setState({
+        profileCompleted: false,
+        careerCompleted: false,
+        careerCategoryId: null,
+        careerPathLabel: null,
+      });
       toastSuccess("Account created", "Welcome to Findem.");
       router.replace("/ProfileUpdate");
     },
@@ -278,9 +276,12 @@ export default function Register() {
             activeOpacity={0.85}
             disabled={registerMutation.isPending}
           >
-            <Text style={styles.signupBtnText}>
-              {registerMutation.isPending ? "Signing Up..." : "Sign Up"}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              {registerMutation.isPending ? <FindemButtonSpinner color="#fff" /> : null}
+              <Text style={styles.signupBtnText}>
+                {registerMutation.isPending ? "Signing Up..." : "Sign Up"}
+              </Text>
+            </View>
             <View style={styles.signupArrow}>
               <Ionicons name="chevron-forward" size={20} color={TINT} />
             </View>

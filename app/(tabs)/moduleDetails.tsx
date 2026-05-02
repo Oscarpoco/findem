@@ -1,12 +1,18 @@
 import { Text, View } from "@/components/Themed";
-import { getLearningTasks } from "@/src/data/learningTasks";
+import { getLearningModule } from "@/src/api/learningModules";
+import {
+  mapApiLearningModuleToTask,
+  type LearningTask,
+} from "@/src/data/learningTasks";
 import { useProgressStore } from "@/src/state/progressStore";
+import { pacingLabelFromDue } from "@/src/utils/duePacing";
+import { FindemLoader } from "@/components/FindemLoader";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -206,16 +212,59 @@ const TopicTag = ({
 export default function ModuleDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const moduleId = typeof params.id === "string" ? parseInt(params.id) : 1;
-  const progress = useProgressStore((state) => state.progress);
-  const tasks = getLearningTasks(progress);
-  const task = tasks.find((t) => t.id === moduleId) || tasks[0];
+  const rawId =
+    typeof params.id === "string"
+      ? params.id
+      : Array.isArray(params.id)
+        ? (params.id[0] ?? "")
+        : "";
+
+  const progressMap = useProgressStore((s) => s.progress);
+  const [loadedTask, setLoadedTask] = useState<LearningTask | null>(null);
+  const [resolveFailed, setResolveFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!rawId) {
+        setLoadedTask(null);
+        setResolveFailed(true);
+        return;
+      }
+      setResolveFailed(false);
+      const prog = useProgressStore.getState().progress;
+      try {
+        const mod = await getLearningModule(rawId);
+        if (!cancelled) {
+          setLoadedTask(mapApiLearningModuleToTask(mod, prog[rawId] ?? 0));
+        }
+        return;
+      } catch {
+        /* API-only */
+      }
+      if (!cancelled) {
+        setLoadedTask(null);
+        setResolveFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [rawId]);
+
+  const task = useMemo((): LearningTask | null => {
+    if (!loadedTask) return null;
+    return {
+      ...loadedTask,
+      progress: progressMap[loadedTask.id] ?? 0,
+    };
+  }, [loadedTask, progressMap]);
 
   const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
-    setIsCompleted(task.progress === 100);
-  }, [task.id, task.progress]);
+    setIsCompleted(task?.progress === 100);
+  }, [task?.id, task?.progress]);
 
   const headerAnim = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(-20)).current;
@@ -275,10 +324,11 @@ export default function ModuleDetailScreen() {
         heroAnim.stopAnimation();
         contentAnim.stopAnimation();
       };
-    }, [task.id]),
+    }, [task?.id]),
   );
 
   const handleComplete = () => {
+    if (!task) return;
     Animated.sequence([
       Animated.spring(btnScale, {
         toValue: 0.95,
@@ -297,6 +347,35 @@ export default function ModuleDetailScreen() {
       useProgressStore.getState().setProgress(task.id, 100);
     });
   };
+
+  if (!task) {
+    return (
+      <View
+        lightColor="transparent"
+        darkColor="transparent"
+        style={styles.loaderScreen}
+      >
+        <StatusBar barStyle="dark-content" />
+        {resolveFailed || !rawId ? (
+          <Text style={{ color: "#64748B", fontSize: 16, textAlign: "center" }}>
+            This module could not be loaded.
+          </Text>
+        ) : (
+          <FindemLoader
+            variant="fullscreen"
+            message="Loading module…"
+            style={{ backgroundColor: "#F0F4FF" }}
+          />
+        )}
+        <TouchableOpacity
+          onPress={() => router.navigate("/(tabs)/modules")}
+          style={styles.loaderBackBtn}
+        >
+          <Text style={{ color: "#0EA5E9", fontWeight: "600" }}>Back to modules</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -384,7 +463,7 @@ export default function ModuleDetailScreen() {
 
               {/* Due date badge */}
               <View style={styles.dateBadge}>
-                <Text style={styles.dateText}>{task.dueDate}</Text>
+                <Text style={styles.dateText}>{pacingLabelFromDue(task.dueDate)}</Text>
               </View>
             </View>
 
@@ -594,6 +673,18 @@ export default function ModuleDetailScreen() {
 const CIRCLE_SIZE = 52;
 
 const styles = StyleSheet.create({
+  loaderScreen: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+    backgroundColor: "transparent",
+  },
+  loaderBackBtn: {
+    marginTop: 28,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
   container: { flex: 1, backgroundColor: "#F0F4FF" },
 
   // ── Header — same as home/modules ──

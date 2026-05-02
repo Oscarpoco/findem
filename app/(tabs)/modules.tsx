@@ -1,10 +1,9 @@
 import { Text, View } from "@/components/Themed";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -16,11 +15,11 @@ import {
 } from "react-native";
 
 import { TaskCard } from "@/components/TaskCard";
-import { getLearningTasks, LearningTask } from "@/src/data/learningTasks";
-import { useProgressStore } from "@/src/state/progressStore";
+import { FindemLoader } from "@/components/FindemLoader";
+import { useLearningModuleList } from "@/src/hooks/useLearningModuleList";
+import { useAuthStore } from "@/src/state/authStore";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CIRCLE_SIZE = 52;
 
 const FILTERS = ["ALL", "BEGINNER", "INTERMEDIATE", "ADVANCED"];
 
@@ -98,24 +97,23 @@ export default function ModulesScreen() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
-  const progress = useProgressStore((state) => state.progress);
-  const [tasks, setTasks] = useState<LearningTask[]>([]);
+  const careerPathLabel = useAuthStore((s) => s.careerPathLabel);
+  const careerCategoryId = useAuthStore((s) => s.careerCategoryId);
+  const { tasks, loadingRemote } = useLearningModuleList();
 
-  // Initialize tasks after store is hydrated
-  useEffect(() => {
-    setTasks(getLearningTasks(progress));
-  }, [progress]);
-
+  const heroTitle = (careerPathLabel || "Learning path")
+    .split(/\s+/)
+    .slice(0, 3)
+    .join("\n");
+  const weekHint = !careerCategoryId
+    ? "Choose a career track to load modules"
+    : tasks.length === 0
+      ? "No modules for your track yet"
+      : `${tasks.length} module${tasks.length !== 1 ? "s" : ""}`;
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerTranslateY = useRef(new Animated.Value(-20)).current;
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const contentTranslateY = useRef(new Animated.Value(20)).current;
-
-  useFocusEffect(
-    useCallback(() => {
-      setTasks(getLearningTasks(progress));
-    }, [progress]),
-  );
 
   useEffect(() => {
     Animated.parallel([
@@ -196,7 +194,15 @@ export default function ModulesScreen() {
 
           <View style={styles.topCenter}>
             <Text style={styles.topTitle}>Learning Path</Text>
-            <Text style={styles.topSub}>{tasks.length} modules · 10 weeks</Text>
+            {careerCategoryId && loadingRemote ? (
+              <FindemLoader
+                variant="inline"
+                message="Loading modules…"
+                style={{ marginTop: 6 }}
+              />
+            ) : (
+              <Text style={styles.topSub}>{weekHint}</Text>
+            )}
           </View>
 
           <TouchableOpacity style={styles.notifBtn}>
@@ -227,9 +233,7 @@ export default function ModulesScreen() {
             },
           ]}
         >
-          <Animated.Text style={styles.heroHeading}>
-            Software{"\n"}Development
-          </Animated.Text>
+          <Animated.Text style={styles.heroHeading}>{heroTitle}</Animated.Text>
           {/* Search bar */}
           <BlurView intensity={20} tint="light" style={styles.searchBar}>
             <Ionicons name="search-outline" size={18} color="#94A3B8" />
@@ -331,11 +335,27 @@ export default function ModulesScreen() {
 
         {/* ── Cards — exact home design ── */}
         {filtered.length === 0 ? (
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyTitle}>No modules found</Text>
-            <Text style={styles.emptySub}>
-              Try a different search or filter
+          <View
+            lightColor="transparent"
+            darkColor="transparent"
+            style={styles.emptyWrap}
+          >
+            <Text style={styles.emptyTitle}>
+              {tasks.length === 0 ? "No modules yet" : "No modules found"}
             </Text>
+            {tasks.length === 0 && !careerCategoryId ? (
+              <Text style={styles.emptySub}>
+                Choose a career track during setup to load your learning path.
+              </Text>
+            ) : tasks.length === 0 && careerCategoryId && loadingRemote ? (
+              <FindemLoader variant="card" message="Loading modules…" />
+            ) : (
+              <Text style={styles.emptySub}>
+                {tasks.length === 0
+                  ? "Your track has no published modules yet."
+                  : "Try a different search or filter"}
+              </Text>
+            )}
           </View>
         ) : (
           filtered.map((task, index) => (
@@ -346,7 +366,11 @@ export default function ModulesScreen() {
               showMeta={true}
               cardStyle="modules"
               showConnector={index < filtered.length - 1}
-              onPress={() => router.push(`/(tabs)/moduleDetails?id=${task.id}`)}
+              onPress={() =>
+                router.push(
+                  `/(tabs)/moduleDetails?id=${encodeURIComponent(task.id)}`,
+                )
+              }
             />
           ))
         )}
@@ -542,7 +566,12 @@ const styles = StyleSheet.create({
   clearText: { fontSize: 14, fontWeight: "400", color: "#0EA5E9" },
 
   // Empty
-  emptyWrap: { alignItems: "center", paddingTop: 80, gap: 8 },
+  emptyWrap: {
+    alignItems: "center",
+    paddingTop: 80,
+    gap: 8,
+    backgroundColor: "transparent",
+  },
   emptyTitle: {
     fontSize: 18,
     fontWeight: "300",

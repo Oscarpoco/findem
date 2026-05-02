@@ -18,6 +18,7 @@ import { useAuthStore, type AuthState } from "@/src/state/authStore";
 import { useMutation } from "@tanstack/react-query";
 import { loginWithEmail, normalizeAuthResponse } from "../src/api/user";
 import { toastError, toastSuccess } from "@/src/ui/toast";
+import { FindemButtonSpinner } from "@/components/FindemLoader";
 
 export const screenOptions = {
   title: "Login",
@@ -33,8 +34,6 @@ export default function Login() {
   const colors = Colors[colorScheme ?? "light"];
   const TINT = Colors.light.tint;
   const login = useAuthStore((s: AuthState) => s.login);
-  const profileCompleted = useAuthStore((s) => s.profileCompleted);
-  const careerCompleted = useAuthStore((s) => s.careerCompleted);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,10 +56,13 @@ export default function Login() {
         accessToken: normalized.accessToken,
         user: { id: normalized.uid, email: normalized.email ?? email },
       });
+      await useAuthStore.getState().syncCareerFromApi();
+      const { profileCompleted: profileDone, careerCompleted: careerDone } =
+        useAuthStore.getState();
       toastSuccess("Signed in", "Welcome back.");
-      if (!profileCompleted) {
+      if (!profileDone) {
         router.replace("/ProfileUpdate");
-      } else if (!careerCompleted) {
+      } else if (!careerDone) {
         router.replace("/CareerPath");
       } else {
         router.replace("/(tabs)");
@@ -217,9 +219,12 @@ export default function Login() {
             activeOpacity={0.85}
             disabled={loginMutation.isPending}
           >
-            <Text style={styles.loginBtnText}>
-              {loginMutation.isPending ? "Signing In..." : "Sign In"}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              {loginMutation.isPending ? <FindemButtonSpinner color="#fff" /> : null}
+              <Text style={styles.loginBtnText}>
+                {loginMutation.isPending ? "Signing In..." : "Sign In"}
+              </Text>
+            </View>
             <View style={styles.loginArrow}>
               <Ionicons name="chevron-forward" size={20} color={TINT} />
             </View>

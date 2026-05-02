@@ -9,10 +9,10 @@ import {
   View,
   Text,
   Dimensions,
-  ActivityIndicator,
 } from "react-native";
 
 import axios from "axios";
+import { FindemLoader } from "@/components/FindemLoader";
 import { useAuthStore } from "@/src/state/authStore";
 import { useOnboardingStore } from "@/src/state/onboardingStore";
 
@@ -30,10 +30,10 @@ export default function SplashScreen() {
   const isDark = colorScheme === "dark";
   const [isLoading, setIsLoading] = useState(false);
 
-  // Professional medical/healthcare palette
+  // Professional education palette (aligned with in-app brand)
   const BG = isDark ? "#0f1419" : "#fafbfc";
   const FG = isDark ? "#e8eaed" : "#0d1117";
-  const ACCENT = isDark ? "#3b82f6" : "#0066cc";
+  const ACCENT = isDark ? "#03d8fd" : "#03d8fd";
   const MUTED = isDark ? "#4a5568" : "#6b7280";
 
   /* ─── ANIM VALUES ─── */
@@ -62,20 +62,6 @@ export default function SplashScreen() {
 
   useEffect(() => {
     let cancelled = false;
-
-    const hydrateStores = async () => {
-      const authPersist = (useAuthStore as any).persist;
-      const onboardingPersist = (useOnboardingStore as any).persist;
-
-      try {
-        await Promise.all([
-          authPersist?.rehydrate?.(),
-          onboardingPersist?.rehydrate?.(),
-        ]);
-      } catch (error) {
-        if (__DEV__) console.warn("Store hydration failed:", error);
-      }
-    };
 
     const animation = Animated.sequence([
       Animated.delay(150),
@@ -117,20 +103,24 @@ export default function SplashScreen() {
         animation.start(() => resolve())
       );
 
-      const hydrationPromise = hydrateStores();
       const serverPromise = wakeUpServer();
 
-      await Promise.all([animationPromise, hydrationPromise, serverPromise]);
+      await Promise.all([animationPromise, serverPromise]);
 
       if (cancelled) return;
 
       const auth = useAuthStore.getState();
+      if (auth.isAuthenticated) {
+        await auth.syncCareerFromApi();
+      }
+
+      const authAfterSync = useAuthStore.getState();
       const onboarding = useOnboardingStore.getState();
 
-      if (auth.isAuthenticated) {
-        if (!auth.profileCompleted) {
+      if (authAfterSync.isAuthenticated) {
+        if (!authAfterSync.profileCompleted) {
           router.replace("/ProfileUpdate");
-        } else if (!auth.careerCompleted) {
+        } else if (!authAfterSync.careerCompleted) {
           router.replace("/CareerPath");
         } else {
           router.replace("/(tabs)");
@@ -175,7 +165,7 @@ export default function SplashScreen() {
           {/* Tagline */}
           <Animated.View style={{ opacity: taglineOpacity }}>
             <Text style={[styles.tagline, { color: MUTED }]}>
-              Find. Connect. Care.
+              Learn skills. Build your path.
             </Text>
           </Animated.View>
         </Animated.View>
@@ -183,7 +173,7 @@ export default function SplashScreen() {
         {/* Loading indicator positioned below logo */}
         {isLoading && (
           <View style={styles.loaderWrapper}>
-            <ActivityIndicator size="small" color={ACCENT} />
+            <FindemLoader variant="inline" indicatorColor={ACCENT} />
           </View>
         )}
       </View>
@@ -196,7 +186,7 @@ export default function SplashScreen() {
         ]}
       >
         <Text style={[styles.footerText, { color: MUTED }]}>
-          Powered by Gemini.ai
+          Gemini — reserved for upcoming AI features
         </Text>
       </Animated.View>
     </View>

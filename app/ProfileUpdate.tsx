@@ -4,6 +4,7 @@ import Colors from "@/constants/Colors";
 import { updateUserProfile } from "../src/api/user";
 import { useAuthStore } from "@/src/state/authStore";
 import { toastError, toastSuccess } from "@/src/ui/toast";
+import { FindemButtonSpinner } from "@/components/FindemLoader";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -198,9 +199,12 @@ export default function ProfileUpdate() {
             activeOpacity={0.85}
             disabled={mutation.isPending}
           >
-            <Text style={styles.primaryBtnText}>
-              {mutation.isPending ? "Saving..." : "Continue"}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              {mutation.isPending ? <FindemButtonSpinner color="#fff" /> : null}
+              <Text style={styles.primaryBtnText}>
+                {mutation.isPending ? "Saving..." : "Continue"}
+              </Text>
+            </View>
             <View style={styles.primaryArrow}>
               <Ionicons name="chevron-forward" size={20} color={TINT} />
             </View>
